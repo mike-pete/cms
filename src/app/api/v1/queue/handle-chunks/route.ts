@@ -4,13 +4,9 @@ import Papa from "papaparse";
 import { z } from "zod";
 import { db } from "~/server/db";
 import { contacts } from "~/server/db/schema";
+import { InputSchema } from "./InputSchems";
 
-export const InputSchema = z.object({
-  csv: z.string(),
-  chunkNumber: z.number(),
-  fileId: z.number(),
-  createdById: z.string(),
-});
+
 
 // Define the schema for CSV rows
 const ContactRowSchema = z

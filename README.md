@@ -17,3 +17,6 @@ docker run -d \
   postgres
 
 http://localhost:3000/api/v1/queue/handle-chunks
+
+
+brew install ngrok
