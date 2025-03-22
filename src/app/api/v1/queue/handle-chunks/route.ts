@@ -35,32 +35,32 @@ type NewContact = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
-const BATCH_SIZE = 1000;
+const BATCH_SIZE = 5_000;
 
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   try {
-
+    const start = performance.now();
     const { csv, chunkNumber, fileId, createdById } = InputSchema.parse(
       await req.json(),
     );
-    console.log("Received webhook for chunk:", chunkNumber, "of file:", fileId);
+    // console.log("Received webhook for chunk:", chunkNumber, "of file:", fileId);
 
     // Parse the CSV string
     const {
       data: rawData,
       errors: parseErrors,
-      meta,
+      // meta,
     } = Papa.parse(csv, {
       header: true,
       skipEmptyLines: true,
       transformHeader: (header) => header.trim().toLowerCase(),
     });
 
-    console.log("Parsed CSV data:", {
-      rowCount: rawData.length,
-      headers: meta.fields,
-      errorCount: parseErrors.length,
-    });
+    // console.log("Parsed CSV data:", {
+    //   rowCount: rawData.length,
+    //   headers: meta.fields,
+    //   errorCount: parseErrors.length,
+    // });
 
     // TODO: log csv parsing errors
     if (parseErrors.length > 0) {
@@ -98,10 +98,10 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         result.error !== null,
     );
 
-    console.log("Validation results:", {
-      validRowCount: validRows.length,
-      invalidRowCount: invalidRows.length,
-    });
+    // console.log("Validation results:", {
+    //   validRowCount: validRows.length,
+    //   invalidRowCount: invalidRows.length,
+    // });
 
     // Process valid rows in batches
     const batches = [];
@@ -113,21 +113,15 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
             createdById,
           }) satisfies NewContact,
       );
-      batches.push(batch);
+      batches.push(await db.insert(contacts).values(batch));
     }
 
     console.log(`Processing ${batches.length} batches of contacts`);
 
-    // Insert batches into database
-    for (const [index, batch] of batches.entries()) {
-      try {
-        await db.insert(contacts).values(batch);
-        console.log(`Inserted batch ${index + 1}/${batches.length}`);
-      } catch (error) {
-        console.error(`Error inserting batch ${index + 1}:`, error);
-        throw error;
-      }
-    }
+    await Promise.allSettled(batches)
+
+    const end = performance.now();
+      console.log(`Batch writes for ${chunkNumber} took ${end - start} milliseconds`);
 
     return new Response(
       JSON.stringify({

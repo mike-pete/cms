@@ -75,9 +75,11 @@ export const contactRouter = createTRPCRouter({
   processFile: protectedProcedure
     .input(z.object({ fileId: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      const start = performance.now();
       const file = await ctx.db.query.files.findFirst({
         where: (files, { eq }) => eq(files.id, input.fileId),
       });
+
 
       if (!file) {
         throw new Error("File not found");
@@ -107,17 +109,17 @@ export const contactRouter = createTRPCRouter({
       let headers: string | null = null;
       let currentChunk: string[] = [];
       let chunkIndex = 0;
-      const CHUNK_SIZE = 100;
+      const CHUNK_SIZE = 10_000;
 
-      const queue:Promise<void>[] = [];
+      const queue: Promise<void>[] = [];
 
       const queueCurrentChunk = () => {
         queue.push(
           queueChunk({
-            csv: currentChunk.join('\n'),
+            csv: currentChunk.join("\n"),
             fileId: input.fileId,
             chunkNumber: chunkIndex,
-            createdById: file.createdById
+            createdById: file.createdById,
           }),
         );
       };
@@ -135,7 +137,7 @@ export const contactRouter = createTRPCRouter({
         currentChunk.push(line);
 
         // If chunk is full, process it
-        const numberOfRowsExcludingHeaders = currentChunk.length - 1
+        const numberOfRowsExcludingHeaders = currentChunk.length - 1;
         if (numberOfRowsExcludingHeaders >= CHUNK_SIZE) {
           queueCurrentChunk();
           currentChunk = [headers];
@@ -149,5 +151,7 @@ export const contactRouter = createTRPCRouter({
       }
 
       await Promise.allSettled(queue);
+      const end = performance.now();
+      console.log(`\n\n\n\n\nAll Writes Took ${end - start} milliseconds`);
     }),
 });
