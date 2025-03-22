@@ -18,7 +18,7 @@ import { type AdapterAccount } from "next-auth/adapters";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `application_${name}`);
+export const createTable = pgTableCreator((name) => `${name}`);
 
 export const posts = createTable(
   "post",
@@ -141,11 +141,7 @@ export const verificationTokens = createTable(
   }),
 );
 
-export const mysqlTable = mysqlTableCreator((name) => `cms_${name}`);
-
-export const pgTable = pgTableCreator((name) => `cms_${name}`);
-
-export const contacts = pgTable("cms_contacts", {
+export const contacts = createTable("contacts", {
   id: serial("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull(),
   firstName: varchar("first_name", { length: 255 }),
@@ -157,3 +153,6 @@ export const contacts = pgTable("cms_contacts", {
     .notNull()
     .references(() => users.id),
 });
+
+export const mysqlTable = mysqlTableCreator((name) => `cms_${name}`);
+export const pgTable = pgTableCreator((name) => `cms_${name}`);
