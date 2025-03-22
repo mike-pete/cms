@@ -21,7 +21,10 @@ export const env = createEnv({
     CLOUDFLARE_R2_ACCESS_KEY_ID: z.string(),
     CLOUDFLARE_R2_SECRET_ACCESS_KEY: z.string(),
     CLOUDFLARE_R2_BUCKET_NAME: z.string(),
+    QSTASH_URL: z.string().url(),
     QSTASH_TOKEN: z.string(),
+    QSTASH_CURRENT_SIGNING_KEY: z.string(),
+    QSTASH_NEXT_SIGNING_KEY: z.string(),
   },
 
   /**
@@ -48,7 +51,10 @@ export const env = createEnv({
     CLOUDFLARE_R2_SECRET_ACCESS_KEY:
       process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
     CLOUDFLARE_R2_BUCKET_NAME: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    QSTASH_URL: process.env.QSTASH_URL,
     QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+    QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
+    QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

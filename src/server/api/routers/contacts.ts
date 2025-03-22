@@ -25,7 +25,7 @@ const s3 = new S3Client({
 
 const qstash = new Client({
   token: env.QSTASH_TOKEN,
-  baseUrl: "http://127.0.0.1:8080",
+  baseUrl: env.QSTASH_URL,
 });
 
 async function queueChunk({
