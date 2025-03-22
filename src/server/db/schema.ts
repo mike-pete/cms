@@ -39,6 +39,20 @@ export const posts = createTable(
   })
 );
 
+export const files = createTable(
+  "files",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    fileName: varchar("file_name", { length: 256 }),
+    createdById: varchar("created_by", { length: 255 })
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  }
+);
+
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
     .notNull()

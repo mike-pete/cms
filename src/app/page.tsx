@@ -1,4 +1,5 @@
 import { AuthButton } from "~/app/_components/AuthButton";
+import { CsvUpload } from "~/app/_components/CsvUpload";
 import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
@@ -26,7 +27,12 @@ export default async function Home() {
             <AuthButton session={session} />
           </div>
 
-          {session?.user && <LatestPost />}
+          {session?.user && (
+            <div className="flex flex-col items-center gap-8">
+              <CsvUpload />
+              <LatestPost />
+            </div>
+          )}
         </div>
       </main>
     </HydrateClient>
