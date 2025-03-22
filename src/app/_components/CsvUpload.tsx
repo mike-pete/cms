@@ -13,6 +13,7 @@ export function CsvUpload() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync: getUploadUrl } = api.contact.getUploadURL.useMutation();
+  const { mutateAsync: processFile } = api.contact.processFile.useMutation();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -31,7 +32,7 @@ export function CsvUpload() {
       setIsUploading(true);
 
       // Get the presigned URL
-      const { presignedURL } = await getUploadUrl({
+      const { presignedURL, fileId } = await getUploadUrl({
         fileName: file.name,
       });
 
@@ -64,6 +65,7 @@ export function CsvUpload() {
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
+      await processFile({ fileId });
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload file");
