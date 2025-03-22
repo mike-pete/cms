@@ -32,6 +32,7 @@ async function queueChunk({
   csv,
   chunkNumber,
   fileId,
+  createdById,
 }: z.infer<typeof InputSchema>) {
   console.log(chunkNumber);
 
@@ -43,6 +44,7 @@ async function queueChunk({
       csv,
       chunkNumber,
       fileId,
+      createdById,
     },
   });
 }
@@ -112,9 +114,10 @@ export const contactRouter = createTRPCRouter({
       const queueCurrentChunk = () => {
         queue.push(
           queueChunk({
-            csv: currentChunk.join(),
+            csv: currentChunk.join('\n'),
             fileId: input.fileId,
             chunkNumber: chunkIndex,
+            createdById: file.createdById
           }),
         );
       };
@@ -132,7 +135,8 @@ export const contactRouter = createTRPCRouter({
         currentChunk.push(line);
 
         // If chunk is full, process it
-        if (currentChunk.length >= CHUNK_SIZE) {
+        const numberOfRowsExcludingHeaders = currentChunk.length - 1
+        if (numberOfRowsExcludingHeaders >= CHUNK_SIZE) {
           queueCurrentChunk();
           currentChunk = [headers];
           chunkIndex++;
@@ -140,7 +144,7 @@ export const contactRouter = createTRPCRouter({
       }
 
       // Handle any remaining lines in the last chunk
-      if (currentChunk.length > 0) {
+      if (currentChunk.length > 1) {
         queueCurrentChunk();
       }
 
