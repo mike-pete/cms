@@ -4,10 +4,12 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Client } from "@upstash/qstash";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/route";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { files } from "~/server/db/schema";
@@ -21,19 +23,28 @@ const s3 = new S3Client({
   },
 });
 
-function queueChunk({
-  headers,
-  lines,
+const qstash = new Client({
+  token: env.QSTASH_TOKEN,
+  baseUrl: "http://127.0.0.1:8080",
+});
+
+async function queueChunk({
+  csv,
   chunkNumber,
   fileId,
-}: {
-  headers: string;
-  lines: string[];
-  chunkNumber: number;
-  fileId: number;
-}) {
-  console.log(chunkNumber)
-  
+}: z.infer<typeof InputSchema>) {
+  console.log(chunkNumber);
+
+  // TODO update status table
+
+  await qstash.publishJSON({
+    url: "http://localhost:3000/api/v1/queue/handle-chunks",
+    body: {
+      csv,
+      chunkNumber,
+      fileId,
+    },
+  });
 }
 
 export const contactRouter = createTRPCRouter({
@@ -96,47 +107,43 @@ export const contactRouter = createTRPCRouter({
       let chunkIndex = 0;
       const CHUNK_SIZE = 100;
 
+      const queue:Promise<void>[] = [];
+
+      const queueCurrentChunk = () => {
+        queue.push(
+          queueChunk({
+            csv: currentChunk.join(),
+            fileId: input.fileId,
+            chunkNumber: chunkIndex,
+          }),
+        );
+      };
+
       for await (const line of rl) {
         // Handle headers
         if (!headers) {
           headers = line;
+          currentChunk.push(headers);
           continue;
         }
 
         // Add line to current chunk
+        invariant(headers, "Headers should be defined");
         currentChunk.push(line);
 
         // If chunk is full, process it
         if (currentChunk.length >= CHUNK_SIZE) {
-          invariant(headers, "Headers should be defined");
-          queueChunk({
-            headers,
-            fileId: input.fileId,
-            lines: currentChunk,
-            chunkNumber: chunkIndex,
-          });
-
-          // Reset for next chunk
-          currentChunk = [];
+          queueCurrentChunk();
+          currentChunk = [headers];
           chunkIndex++;
         }
       }
 
       // Handle any remaining lines in the last chunk
       if (currentChunk.length > 0) {
-        invariant(headers, "Headers should be defined");
-        queueChunk({
-          headers,
-          fileId: input.fileId,
-          lines: currentChunk,
-          chunkNumber: chunkIndex,
-        });
+        queueCurrentChunk();
       }
 
-      // TODO: Here you would send chunks to your queue system
-      // For now, just log the chunks
-      // console.log(`Created ${chunks.length} chunks`);
-      // console.log(`First chunk has ${chunks[0]?.lines.length} lines`);
-      // console.log(`Headers: ${chunks[0]?.headers}`);
+      await Promise.allSettled(queue);
     }),
 });
