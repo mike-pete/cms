@@ -3,11 +3,9 @@ import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
 import Row from "~/app/_components/row";
 import { api, HydrateClient } from "~/trpc/server";
-import { LatestPost } from "../../_components/post";
 import Push from "../../_components/Push";
 
 export default async function DashboardPage() {
-  const hello = await api.post.hello({ text: "from tRPC" });
   await api.contact.getContacts.prefetch({
     page: 1,
     limit: 50,
@@ -22,10 +20,6 @@ export default async function DashboardPage() {
       </Col>
       <Col className="flex-grow p-8">
         <div>
-          <p className="text-2xl text-white">
-            {hello ? hello.greeting : "Loading tRPC query..."}
-          </p>
-          <LatestPost />
           <Push />
           <HydrateClient>
             <ContactsTable />
