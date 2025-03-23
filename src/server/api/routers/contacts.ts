@@ -13,7 +13,6 @@ import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { files } from "~/server/db/schema";
-import { getBaseUrl } from "~/trpc/react";
 
 const s3 = new S3Client({
   endpoint: env.CLOUDFLARE_R2_ENDPOINT,
@@ -40,7 +39,7 @@ async function queueChunk({
   // TODO update status table
 
   await qstash.publishJSON({
-    url: `${getBaseUrl()}/api/v1/queue/handle-chunks`,
+    url: `${env.NEXTAUTH_URL}/api/v1/queue/handle-chunks`,
     body: {
       csv,
       chunkNumber,
