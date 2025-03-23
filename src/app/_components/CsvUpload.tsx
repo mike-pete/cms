@@ -1,15 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
 import { Progress } from "~/components/ui/progress";
+import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+import Col from "./col";
 
 export function CsvUpload() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync: getUploadUrl } = api.contact.getUploadURL.useMutation();
@@ -25,7 +28,37 @@ export function CsvUpload() {
     }
   };
 
-  const handleUpload = async () => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile?.type === "text/csv") {
+      setFile(droppedFile);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } else {
+      alert("Please drop a CSV file");
+    }
+  };
+
+  const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (!file) return;
 
     try {
@@ -76,32 +109,51 @@ export function CsvUpload() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-4">
-      <Input
-        ref={fileInputRef}
-        type="file"
-        accept=".csv"
-        onChange={handleFileChange}
-        disabled={isUploading}
-        className="cursor-pointer"
-      />
-
-      {isUploading && (
-        <div className="space-y-2">
-          <Progress value={uploadProgress} />
-          <p className="text-center text-sm text-gray-500">
-            {Math.round(uploadProgress)}%
-          </p>
-        </div>
-      )}
-
-      <Button
-        onClick={handleUpload}
-        disabled={!file || isUploading}
-        className="w-full"
+    <div
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      <label
+        className={cn(
+          "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-[#192129] p-12 transition-colors",
+          file || isDragging
+            ? "border-emerald-500"
+            : "border-neutral-700 hover:border-neutral-600",
+        )}
       >
-        {isUploading ? "Uploading..." : "Upload CSV"}
-      </Button>
+        <Col className="max-h-[100px] items-center justify-center overflow-hidden">
+          <Image src="/upload.png" alt="CSV" width={200} height={200} />
+        </Col>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          disabled={isUploading}
+          className="hidden"
+        />
+        <p className="text-center text-sm text-gray-500">
+          Drag a CSV file here, or click to select
+        </p>
+        
+        {isUploading && (
+          <div className="space-y-2">
+            <Progress value={uploadProgress} />
+            <p className="text-center text-sm text-gray-500">
+              {Math.round(uploadProgress)}%
+            </p>
+          </div>
+        )}
+
+        <Button
+          onClick={handleUpload}
+          disabled={!file || isUploading}
+          className="w-full"
+        >
+          {isUploading ? "Uploading..." : "Upload CSV"}
+        </Button>
+      </label>
     </div>
   );
 }
