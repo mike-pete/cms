@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Client } from "@upstash/qstash";
+import { desc } from "drizzle-orm";
 import PusherServer from "pusher";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
@@ -13,7 +14,7 @@ import { z } from "zod";
 import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { files } from "~/server/db/schema";
+import { contacts, files } from "~/server/db/schema";
 
 const s3 = new S3Client({
   endpoint: env.CLOUDFLARE_R2_ENDPOINT,
@@ -59,6 +60,14 @@ async function queueChunk({
 }
 
 export const contactRouter = createTRPCRouter({
+  getContacts: protectedProcedure.query(async ({ ctx }) => {
+    const userContacts = await ctx.db.query.contacts.findMany({
+      where: (contacts, { eq }) =>
+        eq(contacts.createdById, ctx.session.user.id),
+      orderBy: [desc(contacts.createdAt)],
+    });
+    return userContacts;
+  }),
   getUploadURL: protectedProcedure
     .input(z.object({ fileName: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
