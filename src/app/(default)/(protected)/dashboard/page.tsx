@@ -1,9 +1,9 @@
 import Col from "~/app/_components/col";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
+import Push from "~/app/_components/Push";
 import Row from "~/app/_components/row";
 import { api, HydrateClient } from "~/trpc/server";
-import Push from "../../_components/Push";
 
 export default async function DashboardPage() {
   await api.contact.getContacts.prefetch({
