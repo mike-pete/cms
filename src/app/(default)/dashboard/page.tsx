@@ -8,6 +8,7 @@ import Push from "../../_components/Push";
 
 export default async function DashboardPage() {
   const hello = await api.post.hello({ text: "from tRPC" });
+  const initialContactData = await api.contact.getContacts({ page: 1, limit: 50 });
   return (
     <Row className="flex-grow">
       <Col className="max-w-md flex-grow gap-4 border-r border-neutral-700 p-8">
@@ -24,7 +25,7 @@ export default async function DashboardPage() {
             </p>
             <LatestPost />
             <Push />
-            <ContactsTable />
+            <ContactsTable initialContactData={initialContactData} />
           </div>
         </HydrateClient>
       </Col>

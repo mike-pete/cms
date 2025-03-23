@@ -11,18 +11,26 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { type RouterOutput } from "~/server/api/root";
 import { api } from "~/trpc/react";
 
-export function ContactsTable() {
+export function ContactsTable({
+  initialContactData,
+}: {
+  initialContactData: RouterOutput["contact"]["getContacts"];
+}) {
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading } = api.contact.getContacts.useQuery({
+  const { data: queryData, isLoading } = api.contact.getContacts.useQuery({
     page: currentPage,
     limit: 50,
   });
 
-  if (isLoading) {
+  // TODO: do something better to show loading state
+  if (!initialContactData && isLoading) {
     return <div>Loading contacts...</div>;
   }
+
+  const data = queryData ?? initialContactData;
 
   if (!data?.contacts.length) {
     return <div>No contacts found. Try uploading a CSV file.</div>;
