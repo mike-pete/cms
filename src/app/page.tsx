@@ -3,6 +3,7 @@ import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
 import GoogleAuthButton from "./_components/GoogleAuthButton";
+import Push from "./_components/Push";
 
 export default async function Home() {
   const hello = await api.post.hello({ text: "from tRPC" });
@@ -31,6 +32,7 @@ export default async function Home() {
             <div className="flex flex-col items-center gap-8">
               <CsvUpload />
               <LatestPost />
+              <Push />
             </div>
           )}
         </div>

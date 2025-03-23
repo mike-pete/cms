@@ -5,6 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Client } from "@upstash/qstash";
+import PusherServer from "pusher";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
 import invariant from "tiny-invariant";
@@ -21,6 +22,14 @@ const s3 = new S3Client({
     accessKeyId: env.CLOUDFLARE_R2_ACCESS_KEY_ID,
     secretAccessKey: env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
   },
+});
+
+const pusher = new PusherServer({
+  appId: env.PUSHER_APP_ID,
+  key: env.NEXT_PUBLIC_PUSHER_KEY,
+  secret: env.PUSHER_SECRET,
+  cluster: env.NEXT_PUBLIC_PUSHER_CLUSTER,
+  useTLS: true,
 });
 
 const qstash = new Client({
@@ -152,5 +161,16 @@ export const contactRouter = createTRPCRouter({
       await Promise.allSettled(queue);
       const end = performance.now();
       console.log(`\n\n\n\n\nAll Writes Took ${end - start} milliseconds`);
+    }),
+  sendNotification: protectedProcedure
+    .input(
+      z.object({
+        channel: z.string(),
+        event: z.string(),
+        data: z.string(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      await pusher.trigger(input.channel, input.event, input.data);
     }),
 });
