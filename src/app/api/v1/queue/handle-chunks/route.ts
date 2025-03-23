@@ -6,8 +6,6 @@ import { db } from "~/server/db";
 import { contacts } from "~/server/db/schema";
 import { InputSchema } from "./InputSchems";
 
-
-
 // Define the schema for CSV rows
 const ContactRowSchema = z
   .object({
@@ -31,7 +29,7 @@ type NewContact = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
-const BATCH_SIZE = 5_000;
+const BATCH_SIZE = 10_000;
 
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   try {
@@ -100,6 +98,9 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     // });
 
     // Process valid rows in batches
+    console.log(`Starting to process ${validRows.length} valid rows`);
+    const batchStart = performance.now();
+
     const batches = [];
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE).map(
@@ -109,15 +110,33 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
             createdById,
           }) satisfies NewContact,
       );
-      batches.push(await db.insert(contacts).values(batch));
+      // Don't await here, just prepare the insert promise
+      batches.push(db.insert(contacts).values(batch));
     }
 
-    console.log(`Processing ${batches.length} batches of contacts`);
+    console.log(
+      `Prepared ${batches.length} batches in ${performance.now() - batchStart}ms`,
+    );
 
-    await Promise.allSettled(batches)
+    const insertStart = performance.now();
+    const results = await Promise.allSettled(batches);
+    const insertEnd = performance.now();
+
+    const successfulBatches = results.filter(
+      (r) => r.status === "fulfilled",
+    ).length;
+    const failedBatches = results.filter((r) => r.status === "rejected").length;
+
+    console.log(`Database insertions completed:
+      - Total time: ${insertEnd - insertStart}ms
+      - Successful batches: ${successfulBatches}
+      - Failed batches: ${failedBatches}
+      - Average time per batch: ${Math.floor((insertEnd - insertStart) / batches.length)}ms`);
 
     const end = performance.now();
-      console.log(`Batch writes for ${chunkNumber} took ${end - start} milliseconds`);
+    console.log(
+      `Batch writes for ${chunkNumber} took ${end - start} milliseconds`,
+    );
 
     return new Response(
       JSON.stringify({
