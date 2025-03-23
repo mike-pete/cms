@@ -1,17 +1,17 @@
 "use client";
-import { signIn } from "next-auth/react";
 import Image from "next/image";
+import Link from "next/link";
 
 const GoogleAuthButton: React.FC = () => {
   return (
-    <button onClick={() => void signIn("google")} className="inline-block">
+    <Link href="/auth/signin/">
       <Image
         src="/siginWithGoogle.svg"
         alt="sign in with Google"
         width="175"
         height="40"
       />
-    </button>
+    </Link>
   );
 };
 
