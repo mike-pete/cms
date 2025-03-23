@@ -6,10 +6,10 @@ const GoogleAuthButton: React.FC = () => {
   const { data: session, status } = useSession();
 
   if (session?.user.email) {
-    return <Link href="/auth/signout/">Sign Out</Link>;
+    return <Link href="/auth/signout/" className="font-semibold text-sm">sign out</Link>;
   }
 
-  return <Link href="/auth/signin/">Sign In</Link>;
+  return <Link href="/auth/signin/" className="font-semibold text-sm">sign in</Link>;
 };
 
 export default GoogleAuthButton;

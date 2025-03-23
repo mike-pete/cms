@@ -19,7 +19,7 @@ export default function RootLayout({
       <body>
         <SessionProvider>
           <TRPCReactProvider>
-            <Col className="min-h-screen bg-slate-950 text-white">
+            <Col className="min-h-screen bg-neutral-950 text-white">
               {children}
             </Col>
           </TRPCReactProvider>
