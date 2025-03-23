@@ -1,18 +1,15 @@
 "use client";
-import Image from "next/image";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const GoogleAuthButton: React.FC = () => {
-  return (
-    <Link href="/auth/signin/">
-      <Image
-        src="/siginWithGoogle.svg"
-        alt="sign in with Google"
-        width="175"
-        height="40"
-      />
-    </Link>
-  );
+  const { data: session, status } = useSession();
+
+  if (session?.user.email) {
+    return <Link href="/auth/signout/">Sign Out</Link>;
+  }
+
+  return <Link href="/auth/signin/">Sign In</Link>;
 };
 
 export default GoogleAuthButton;

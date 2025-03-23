@@ -13,7 +13,7 @@ const SignIn: React.FC = () => {
   }, [status]);
 
   if (session?.user.email) {
-    return redirect("/");
+    return redirect("/dashboard");
   }
 
   return (null);

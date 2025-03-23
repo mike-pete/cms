@@ -1,10 +1,9 @@
-import "~/styles/globals.css";
-
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
-
+import "~/styles/globals.css";
 import { TRPCReactProvider } from "~/trpc/react";
+import Col from "./_components/col";
 
 export const metadata: Metadata = {
   title: "CMS",
@@ -19,7 +18,11 @@ export default function RootLayout({
     <html lang="en" className={`${GeistSans.variable}`}>
       <body>
         <SessionProvider>
-          <TRPCReactProvider>{children}</TRPCReactProvider>
+          <TRPCReactProvider>
+            <Col className="min-h-screen bg-slate-950 text-white">
+              {children}
+            </Col>
+          </TRPCReactProvider>
         </SessionProvider>
       </body>
     </html>
