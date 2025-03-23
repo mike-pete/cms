@@ -29,7 +29,7 @@ type NewContact = Omit<
   "id" | "createdAt" | "updatedAt"
 >;
 
-const BATCH_SIZE = 10_000;
+const BATCH_SIZE = 5_000;
 
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   try {
@@ -101,7 +101,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     console.log(`Starting to process ${validRows.length} valid rows`);
     const batchStart = performance.now();
 
-    const batches = [];
+    const batches: Promise<unknown>[] = [];
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE).map(
         (row) =>
