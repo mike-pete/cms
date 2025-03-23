@@ -1,8 +1,8 @@
-import { AuthButton } from "~/app/_components/AuthButton";
 import { CsvUpload } from "~/app/_components/CsvUpload";
 import { LatestPost } from "~/app/_components/post";
 import { auth } from "~/server/auth";
 import { api, HydrateClient } from "~/trpc/server";
+import GoogleAuthButton from "./_components/GoogleAuthButton";
 
 export default async function Home() {
   const hello = await api.post.hello({ text: "from tRPC" });
@@ -24,7 +24,7 @@ export default async function Home() {
               {hello ? hello.greeting : "Loading tRPC query..."}
             </p>
 
-            <AuthButton session={session} />
+            <GoogleAuthButton />
           </div>
 
           {session?.user && (

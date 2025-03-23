@@ -1,5 +1,4 @@
 import { relations, sql } from "drizzle-orm";
-import { mysqlTableCreator } from "drizzle-orm/mysql-core";
 import {
   index,
   integer,
@@ -153,6 +152,3 @@ export const contacts = createTable("contacts", {
     .notNull()
     .references(() => users.id),
 });
-
-export const mysqlTable = mysqlTableCreator((name) => `cms_${name}`);
-export const pgTable = pgTableCreator((name) => `cms_${name}`);

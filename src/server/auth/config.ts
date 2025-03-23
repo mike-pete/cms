@@ -67,4 +67,8 @@ export const authConfig = {
       },
     }),
   },
+  pages: {
+    signIn: "/auth/signin",
+    signOut: "/auth/signout",
+  },
 } satisfies NextAuthConfig;
