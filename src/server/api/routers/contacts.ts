@@ -5,7 +5,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { Client } from "@upstash/qstash";
-import { desc } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import PusherServer from "pusher";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
@@ -60,14 +60,37 @@ async function queueChunk({
 }
 
 export const contactRouter = createTRPCRouter({
-  getContacts: protectedProcedure.query(async ({ ctx }) => {
-    const userContacts = await ctx.db.query.contacts.findMany({
-      where: (contacts, { eq }) =>
-        eq(contacts.createdById, ctx.session.user.id),
-      orderBy: [desc(contacts.createdAt)],
-    });
-    return userContacts;
-  }),
+  getContacts: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().min(1).default(1),
+        limit: z.number().min(1).max(100).default(50),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const offset = (input.page - 1) * input.limit;
+
+      const [userContacts, totalCount] = await Promise.all([
+        ctx.db.query.contacts.findMany({
+          where: (contactsTable, { eq }) =>
+            eq(contactsTable.createdById, ctx.session.user.id),
+          orderBy: [desc(contacts.createdAt)],
+          limit: input.limit,
+          offset: offset,
+        }),
+        ctx.db
+          .select({ count: sql<number>`count(*)` })
+          .from(contacts)
+          .where(eq(contacts.createdById, ctx.session.user.id))
+          .then((result) => Number(result[0]?.count ?? 0)),
+      ]);
+
+      return {
+        contacts: userContacts,
+        totalPages: Math.ceil(totalCount / input.limit),
+        currentPage: input.page,
+      };
+    }),
   getUploadURL: protectedProcedure
     .input(z.object({ fileName: z.string().min(1) }))
     .mutation(async ({ ctx, input }) => {
