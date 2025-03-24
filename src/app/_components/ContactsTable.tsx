@@ -30,33 +30,35 @@ export function ContactsTable() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-md border border-neutral-700">
-        <Table>
-          <TableHeader>
-            <TableRow className="border-b border-neutral-700">
-              <TableHead>Email</TableHead>
-              <TableHead>First Name</TableHead>
-              <TableHead>Last Name</TableHead>
-              <TableHead>Created At</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.contacts.map((contact) => (
-              <TableRow
-                key={contact.id}
-                className="border-b border-neutral-700"
-              >
-                <TableCell>{contact.email}</TableCell>
-                <TableCell>{contact.firstName ?? "-"}</TableCell>
-                <TableCell>{contact.lastName ?? "-"}</TableCell>
-                <TableCell>
-                  {new Date(contact.createdAt).toLocaleDateString()}
-                </TableCell>
+    <div className="h-full space-y-4">
+      <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-md border border-neutral-700">
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader className="sticky top-0 bg-zinc-950">
+              <TableRow className="border-b border-neutral-700">
+                <TableHead>Email</TableHead>
+                <TableHead>First Name</TableHead>
+                <TableHead>Last Name</TableHead>
+                <TableHead>Created At</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {data.contacts.map((contact) => (
+                <TableRow
+                  key={contact.id}
+                  className="border-b border-neutral-700"
+                >
+                  <TableCell>{contact.email}</TableCell>
+                  <TableCell>{contact.firstName ?? "-"}</TableCell>
+                  <TableCell>{contact.lastName ?? "-"}</TableCell>
+                  <TableCell>
+                    {new Date(contact.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <div className="flex items-center justify-between px-2">
