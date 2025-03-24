@@ -42,8 +42,7 @@ async function queueChunk({
   csv,
   chunkNumber,
   fileId,
-  createdById,
-  userId
+  createdById
 }: z.infer<typeof InputSchema>) {
   console.log(chunkNumber);
 
@@ -59,7 +58,7 @@ async function queueChunk({
     },
   });
 
-  await pusher.trigger(userId, 'x', 'handled chunk');
+  await pusher.trigger(createdById, 'x', 'handled chunk');
 }
 
 export const contactRouter = createTRPCRouter({
@@ -163,7 +162,6 @@ export const contactRouter = createTRPCRouter({
             fileId: input.fileId,
             chunkNumber: chunkIndex,
             createdById: file.createdById,
-            userId: ctx.session.user.id
           }),
         );
       };
