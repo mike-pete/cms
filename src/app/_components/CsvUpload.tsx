@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Progress } from "~/components/ui/progress";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import Col from "./col";
+import Col from "./Col";
 
 export function CsvUpload() {
   const [file, setFile] = useState<File | null>(null);
@@ -136,7 +136,7 @@ export function CsvUpload() {
         <p className="text-center text-sm text-gray-500">
           Drag a CSV file here, or click to select
         </p>
-        
+
         {isUploading && (
           <div className="space-y-2">
             <Progress value={uploadProgress} />

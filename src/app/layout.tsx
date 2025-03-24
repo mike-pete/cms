@@ -3,7 +3,7 @@ import { type Metadata } from "next";
 import { SessionProvider } from "next-auth/react";
 import "~/styles/globals.css";
 import { TRPCReactProvider } from "~/trpc/react";
-import Col from "./_components/col";
+import Col from "./_components/Col";
 
 export const metadata: Metadata = {
   title: "CMS",

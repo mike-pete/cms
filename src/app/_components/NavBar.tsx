@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "~/server/auth";
 import GoogleAuthButton from "./GoogleAuthButton";
-import Row from "./row";
+import Row from "./Row";
 
 export default async function NavBar() {
   const session = await auth();

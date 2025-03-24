@@ -1,4 +1,4 @@
-import Col from "../_components/col";
+import Col from "../_components/Col";
 
 export default async function Home() {
   return (

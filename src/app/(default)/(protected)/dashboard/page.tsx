@@ -1,8 +1,8 @@
-import Col from "~/app/_components/col";
+import Col from "~/app/_components/Col";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
 import Push from "~/app/_components/Push";
-import Row from "~/app/_components/row";
+import Row from "~/app/_components/Row";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function DashboardPage() {
@@ -19,7 +19,7 @@ export default async function DashboardPage() {
         </Col>
       </Col>
       <HydrateClient>
-        <Col className="flex h-full flex-1 flex-col p-8 gap-4">
+        <Col className="flex h-full flex-1 flex-col gap-4 p-8">
           <Push />
           <Col className="min-h-0 flex-1">
             <ContactsTable />
