@@ -17,7 +17,6 @@ export default async function DashboardPage() {
         <CsvUpload />
         <Col className="rounded-md border border-neutral-700 p-4">
           <Col>
-            No files being processed
             <ChunkUpdates />
           </Col>
         </Col>

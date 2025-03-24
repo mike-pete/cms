@@ -1,12 +1,7 @@
-import {
-  GetObjectCommand,
-  PutObjectCommand,
-  S3Client,
-} from "@aws-sdk/client-s3";
+import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Client } from "@upstash/qstash";
+import { TRPCError } from "@trpc/server";
 import { desc, eq, sql } from "drizzle-orm";
-import PusherServer from "pusher";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
 import invariant from "tiny-invariant";
@@ -14,30 +9,10 @@ import { z } from "zod";
 import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import pusher from "~/server/connections/pusher";
+import qstash from "~/server/connections/qstash";
+import s3 from "~/server/connections/s3";
 import { chunks, contacts, files } from "~/server/db/schema";
-import { TRPCError } from "@trpc/server";
-
-const s3 = new S3Client({
-  endpoint: env.CLOUDFLARE_R2_ENDPOINT,
-  region: "auto",
-  credentials: {
-    accessKeyId: env.CLOUDFLARE_R2_ACCESS_KEY_ID,
-    secretAccessKey: env.CLOUDFLARE_R2_SECRET_ACCESS_KEY,
-  },
-});
-
-const pusher = new PusherServer({
-  appId: env.PUSHER_APP_ID,
-  key: env.NEXT_PUBLIC_PUSHER_KEY,
-  secret: env.PUSHER_SECRET,
-  cluster: env.NEXT_PUBLIC_PUSHER_CLUSTER,
-  useTLS: true,
-});
-
-const qstash = new Client({
-  token: env.QSTASH_TOKEN,
-  baseUrl: env.QSTASH_URL,
-});
 
 async function queueChunk({
   csv,
@@ -58,8 +33,6 @@ async function queueChunk({
       createdById,
     },
   });
-
-  await pusher.trigger(createdById, "x", "handled chunk");
 }
 
 export const contactRouter = createTRPCRouter({
@@ -238,4 +211,37 @@ export const contactRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await pusher.trigger(ctx.session.user.id, input.event, input.data);
     }),
+  getFileProcessingStatus: protectedProcedure.query(async ({ ctx }) => {
+    const fileStatuses = await ctx.db
+      .select({
+        fileId: files.id,
+        fileName: files.fileName,
+        totalChunks: sql<number>`count(${chunks.id})`.as("total_chunks"),
+        pendingChunks:
+          sql<number>`sum(case when ${chunks.status} = 'PENDING' then 1 else 0 end)`.as(
+            "pending_chunks",
+          ),
+        doneChunks:
+          sql<number>`sum(case when ${chunks.status} = 'DONE' then 1 else 0 end)`.as(
+            "done_chunks",
+          ),
+        createdAt: files.createdAt,
+      })
+      .from(files)
+      .leftJoin(chunks, eq(files.id, chunks.fileId))
+      .where(eq(files.createdById, ctx.session.user.id))
+      .groupBy(files.id)
+      .having(
+        sql`sum(case when ${chunks.status} = 'PENDING' then 1 else 0 end) > 0`,
+      )
+      .orderBy(desc(files.createdAt));
+
+    return fileStatuses.map((file) => ({
+      ...file,
+      completionPercentage:
+        file.totalChunks > 0
+          ? Math.round((file.doneChunks / file.totalChunks) * 100)
+          : 0,
+    }));
+  }),
 });

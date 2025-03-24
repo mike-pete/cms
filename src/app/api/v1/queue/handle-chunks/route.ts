@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import { z } from "zod";
+import pusher from "~/server/connections/pusher";
 import { db } from "~/server/db";
 import { chunks, contacts } from "~/server/db/schema";
 import { InputSchema } from "./InputSchems";
@@ -105,17 +106,20 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
 
       // Wait for all batches to complete
       const results = await Promise.allSettled(batches);
-      
+
       // Update chunk status to DONE
       await tx
-      .update(chunks)
-      .set({ status: "DONE" as const })
-      .where(
-        sql`${chunks.fileId} = ${fileId} AND ${chunks.chunkNumber} = ${chunkNumber}`,
-      );
-      
+        .update(chunks)
+        .set({ status: "DONE" as const })
+        .where(
+          sql`${chunks.fileId} = ${fileId} AND ${chunks.chunkNumber} = ${chunkNumber}`,
+        );
+
       return results;
     });
+
+    await pusher.trigger(createdById, "x", "handled chunk");
+
     const batchEnd = performance.now();
 
     const successfulBatches = results.filter(

@@ -1,7 +1,6 @@
 import { useSession } from "next-auth/react";
 import type { Channel } from "pusher-js";
-import { useEffect, useState } from "react";
-import invariant from "tiny-invariant";
+import { useCallback, useEffect, useState } from "react";
 import pusherClient from "~/lib/pusher";
 
 const usePusherSub = () => {
@@ -9,27 +8,37 @@ const usePusherSub = () => {
   const { data: session } = useSession();
 
   useEffect(() => {
-    invariant(
-      session?.user.id,
-      "only authenticated users can subscribe to push notifications",
-    );
+    if (!session?.user.id) {
+      return;
+    }
 
+    console.log("Subscribing to Pusher channel:", session.user.id);
     const newChannel = pusherClient.subscribe(session.user.id);
     setChannel(newChannel);
 
     return () => {
-      if (channel) {
-        channel.unbind_all();
-        channel.unsubscribe();
+      console.log("Cleaning up Pusher subscription");
+      if (newChannel) {
+        newChannel.unbind_all();
+        newChannel.unsubscribe();
       }
+      setChannel(null);
     };
-  }, []);
+  }, [session?.user.id]); // Re-run if user ID changes
 
-  const subscribe = <T>(event: string, callback: (data: T) => void) => {
-    return channel?.bind(event, callback);
-  };
+  const subscribe = useCallback(
+    <T>(event: string, callback: (data: T) => void) => {
+      if (!channel) {
+        console.warn("Attempted to subscribe before channel was ready");
+        return null;
+      }
+      console.log("Binding to event:", event);
+      return channel.bind(event, callback);
+    },
+    [channel],
+  );
 
-  return { subscribe };
+  return { subscribe, isConnected: !!channel };
 };
 
 export default usePusherSub;
