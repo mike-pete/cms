@@ -14,7 +14,8 @@ import { z } from "zod";
 import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import { contacts, files } from "~/server/db/schema";
+import { chunks, contacts, files } from "~/server/db/schema";
+import { TRPCError } from "@trpc/server";
 
 const s3 = new S3Client({
   endpoint: env.CLOUDFLARE_R2_ENDPOINT,
@@ -42,7 +43,7 @@ async function queueChunk({
   csv,
   chunkNumber,
   fileId,
-  createdById
+  createdById,
 }: z.infer<typeof InputSchema>) {
   console.log(chunkNumber);
 
@@ -58,7 +59,7 @@ async function queueChunk({
     },
   });
 
-  await pusher.trigger(createdById, 'x', 'handled chunk');
+  await pusher.trigger(createdById, "x", "handled chunk");
 }
 
 export const contactRouter = createTRPCRouter({
@@ -166,6 +167,8 @@ export const contactRouter = createTRPCRouter({
         );
       };
 
+      const chunkSizes: { chunkNumber: string; lineCount: number }[] = [];
+
       for await (const line of rl) {
         // Handle headers
         if (!headers) {
@@ -181,6 +184,10 @@ export const contactRouter = createTRPCRouter({
         // If chunk is full, process it
         const numberOfRowsExcludingHeaders = currentChunk.length - 1;
         if (numberOfRowsExcludingHeaders >= CHUNK_SIZE) {
+          chunkSizes.push({
+            chunkNumber: String(chunkIndex),
+            lineCount: numberOfRowsExcludingHeaders,
+          });
           queueCurrentChunk();
           currentChunk = [headers];
           chunkIndex++;
@@ -189,10 +196,35 @@ export const contactRouter = createTRPCRouter({
 
       // Handle any remaining lines in the last chunk
       if (currentChunk.length > 1) {
+        chunkSizes.push({
+          chunkNumber: String(chunkIndex),
+          lineCount: currentChunk.length - 1,
+        });
         queueCurrentChunk();
       }
 
       await Promise.allSettled(queue);
+
+      // Create all chunk records in a single transaction
+      try {
+        await ctx.db.transaction(async (tx) => {
+          await tx.insert(chunks).values(
+            chunkSizes.map((chunk) => ({
+              fileId: input.fileId,
+              chunkNumber: chunk.chunkNumber,
+              lineCount: chunk.lineCount,
+              status: "PENDING" as const,
+            })),
+          );
+        });
+      } catch (error) {
+        console.error("Failed to create chunk records:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to create chunk records in database",
+        });
+      }
+
       const end = performance.now();
       console.log(`\n\n\n\n\nAll Writes Took ${end - start} milliseconds`);
     }),

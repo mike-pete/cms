@@ -1,9 +1,10 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
+import { sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import { z } from "zod";
 import { db } from "~/server/db";
-import { contacts } from "~/server/db/schema";
+import { chunks, contacts } from "~/server/db/schema";
 import { InputSchema } from "./InputSchems";
 
 // Define the schema for CSV rows
@@ -102,8 +103,18 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         batches.push(tx.insert(contacts).values(batch));
       }
 
-
-      return Promise.allSettled(batches);
+      // Wait for all batches to complete
+      const results = await Promise.allSettled(batches);
+      
+      // Update chunk status to DONE
+      await tx
+      .update(chunks)
+      .set({ status: "DONE" as const })
+      .where(
+        sql`${chunks.fileId} = ${fileId} AND ${chunks.chunkNumber} = ${chunkNumber}`,
+      );
+      
+      return results;
     });
     const batchEnd = performance.now();
 
@@ -118,7 +129,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       - Total time: ${batchEnd - batchStart}ms
       - Successful batches: ${successfulBatches}
       - Failed batches: ${failedBatches}
-    `)
+    `);
 
     return new Response(
       JSON.stringify({
