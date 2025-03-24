@@ -1,3 +1,4 @@
+import ChunkUpdates from "~/app/_components/ChunkUpdates";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
 import Push from "~/app/_components/Push";
@@ -15,7 +16,10 @@ export default async function DashboardPage() {
       <Col className="max-w-md gap-4 border-r border-neutral-700 p-8">
         <CsvUpload />
         <Col className="rounded-md border border-neutral-700 p-4">
-          <Col>No files being processed</Col>
+          <Col>
+            No files being processed
+            <ChunkUpdates />
+          </Col>
         </Col>
       </Col>
       <HydrateClient>
