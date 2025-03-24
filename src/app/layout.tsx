@@ -6,7 +6,7 @@ import "~/styles/globals.css";
 import { TRPCReactProvider } from "~/trpc/react";
 import Col from "../components/Col";
 export const metadata: Metadata = {
-  title: "CMS",
+  title: "DEX",
   description: "Contact Management System",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
 };

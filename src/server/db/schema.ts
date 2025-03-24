@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   index,
   integer,
+  pgEnum,
   pgTableCreator,
   primaryKey,
   serial,
@@ -19,6 +20,8 @@ import { type AdapterAccount } from "next-auth/adapters";
  */
 export const createTable = pgTableCreator((name) => `${name}`);
 
+export const chunkStatusEnum = pgEnum("chunk_status", ["PENDING", "DONE"]);
+
 export const posts = createTable(
   "post",
   {
@@ -26,7 +29,7 @@ export const posts = createTable(
     name: varchar("name", { length: 256 }),
     createdById: varchar("created_by", { length: 255 })
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, {onDelete: 'cascade'}),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -45,7 +48,20 @@ export const files = createTable("files", {
   fileName: varchar("file_name", { length: 256 }),
   createdById: varchar("created_by", { length: 255 })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, {onDelete: 'cascade'}),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
+});
+
+export const chunks = createTable("chunks", {
+  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+  fileId: integer("file_id")
+    .notNull()
+    .references(() => files.id, {onDelete: 'cascade'}),
+  chunkNumber: varchar("chunk_number", { length: 256 }).notNull(),
+  lineCount: integer("line_count").notNull(),
+  status: chunkStatusEnum("status").notNull().default("PENDING"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -110,7 +126,7 @@ export const sessions = createTable(
       .primaryKey(),
     userId: varchar("user_id", { length: 255 })
       .notNull()
-      .references(() => users.id),
+      .references(() => users.id, {onDelete: 'cascade'}),
     expires: timestamp("expires", {
       mode: "date",
       withTimezone: true,
@@ -150,5 +166,5 @@ export const contacts = createTable("contacts", {
     .notNull(),
   createdById: varchar("created_by", { length: 255 })
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, {onDelete: 'cascade'}),
 });
