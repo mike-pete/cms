@@ -13,6 +13,7 @@ import {
 } from "~/components/ui/table";
 import { api } from "~/trpc/react";
 import Col from "./col";
+import Row from "./row";
 
 export function ContactsTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,11 +63,11 @@ export function ContactsTable() {
         </div>
       </Col>
 
-      <div className="mt-4 flex items-center justify-between px-2">
+      <div className="mt-4 flex shrink-0 items-center justify-between px-2">
         <div className="text-sm text-neutral-400">
           Page {data.currentPage} of {data.totalPages}
         </div>
-        <div className="flex gap-2">
+        <Row className="gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -85,7 +86,7 @@ export function ContactsTable() {
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-        </div>
+        </Row>
       </div>
     </Col>
   );

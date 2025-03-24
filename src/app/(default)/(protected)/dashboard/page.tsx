@@ -19,9 +19,11 @@ export default async function DashboardPage() {
         </Col>
       </Col>
       <HydrateClient>
-        <Col className="flex-1 overflow-hidden p-8">
+        <Col className="flex h-full flex-1 flex-col p-8 gap-4">
           <Push />
-          <ContactsTable />
+          <Col className="min-h-0 flex-1">
+            <ContactsTable />
+          </Col>
         </Col>
       </HydrateClient>
     </Row>
