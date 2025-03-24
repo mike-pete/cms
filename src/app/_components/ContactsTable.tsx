@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { api } from "~/trpc/react";
+import Col from "./col";
 
 export function ContactsTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -30,9 +31,9 @@ export function ContactsTable() {
   }
 
   return (
-    <div className="h-full space-y-4">
-      <div className="flex h-[calc(100vh-12rem)] flex-col overflow-hidden rounded-md border border-neutral-700">
-        <div className="overflow-auto">
+    <Col className="h-full">
+      <Col className="flex-1 overflow-hidden rounded-md border border-neutral-700">
+        <div className="h-full overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-zinc-950">
               <TableRow className="border-b border-neutral-700">
@@ -59,9 +60,9 @@ export function ContactsTable() {
             </TableBody>
           </Table>
         </div>
-      </div>
+      </Col>
 
-      <div className="flex items-center justify-between px-2">
+      <div className="mt-4 flex items-center justify-between px-2">
         <div className="text-sm text-neutral-400">
           Page {data.currentPage} of {data.totalPages}
         </div>
@@ -86,6 +87,6 @@ export function ContactsTable() {
           </Button>
         </div>
       </div>
-    </div>
+    </Col>
   );
 }
