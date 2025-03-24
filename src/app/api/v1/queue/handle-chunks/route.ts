@@ -33,7 +33,6 @@ const BATCH_SIZE = 5_000;
 
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   try {
-    const start = performance.now();
     const { csv, chunkNumber, fileId, createdById } = InputSchema.parse(
       await req.json(),
     );

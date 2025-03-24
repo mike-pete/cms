@@ -151,7 +151,7 @@ export const contactRouter = createTRPCRouter({
       let headers: string | null = null;
       let currentChunk: string[] = [];
       let chunkIndex = 0;
-      const CHUNK_SIZE = 50_000;
+      const CHUNK_SIZE = 10_000;
 
       const queue: Promise<void>[] = [];
 
