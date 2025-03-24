@@ -43,6 +43,7 @@ async function queueChunk({
   chunkNumber,
   fileId,
   createdById,
+  userId
 }: z.infer<typeof InputSchema>) {
   console.log(chunkNumber);
 
@@ -57,6 +58,8 @@ async function queueChunk({
       createdById,
     },
   });
+
+  await pusher.trigger(userId, 'x', 'handled chunk');
 }
 
 export const contactRouter = createTRPCRouter({
@@ -160,6 +163,7 @@ export const contactRouter = createTRPCRouter({
             fileId: input.fileId,
             chunkNumber: chunkIndex,
             createdById: file.createdById,
+            userId: ctx.session.user.id
           }),
         );
       };
@@ -197,12 +201,11 @@ export const contactRouter = createTRPCRouter({
   sendNotification: protectedProcedure
     .input(
       z.object({
-        channel: z.string(),
         event: z.string(),
         data: z.string(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      await pusher.trigger(input.channel, input.event, input.data);
+      await pusher.trigger(ctx.session.user.id, input.event, input.data);
     }),
 });

@@ -1,31 +1,28 @@
 "use client";
-import Pusher from "pusher-js/with-encryption";
 import { useEffect } from "react";
-import { env } from "~/env";
 import { api } from "~/trpc/react";
-
-const { NEXT_PUBLIC_PUSHER_KEY, NEXT_PUBLIC_PUSHER_CLUSTER } = env;
-
-const pusher = new Pusher(NEXT_PUBLIC_PUSHER_KEY, {
-  cluster: NEXT_PUBLIC_PUSHER_CLUSTER,
-});
-
-const channel = pusher.subscribe("channel-id");
+import usePusherSub from "../_hooks/userPusherSub";
 
 export default function Push() {
   const triggerEvent = api.contact.sendNotification.useMutation();
+  const { subscribe } = usePusherSub();
+
   useEffect(() => {
-    channel.bind("my-event", (data: string) => {
-      console.log(data);
+    const sub = subscribe<string>("my-event", (data) => {
+      console.log("aah", data);
     });
-  }, []);
+
+    return () => {
+      sub?.unbind();
+    };
+  }, [subscribe]);
+
   return (
     <div>
       Push
       <button
         onClick={() =>
           triggerEvent.mutate({
-            channel: "channel-id",
             event: "my-event",
             data: "hello",
           })

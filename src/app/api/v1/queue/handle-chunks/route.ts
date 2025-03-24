@@ -37,8 +37,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     const { csv, chunkNumber, fileId, createdById } = InputSchema.parse(
       await req.json(),
     );
-    // console.log("Received webhook for chunk:", chunkNumber, "of file:", fileId);
-
+    
     // Parse the CSV string
     const {
       data: rawData,
@@ -50,11 +49,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       transformHeader: (header) => header.trim().toLowerCase(),
     });
 
-    // console.log("Parsed CSV data:", {
-    //   rowCount: rawData.length,
-    //   headers: meta.fields,
-    //   errorCount: parseErrors.length,
-    // });
 
     // TODO: log csv parsing errors
     if (parseErrors.length > 0) {
@@ -92,10 +86,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         result.error !== null,
     );
 
-    // console.log("Validation results:", {
-    //   validRowCount: validRows.length,
-    //   invalidRowCount: invalidRows.length,
-    // });
 
     // Process valid rows in batches
     console.log(`Starting to process ${validRows.length} valid rows`);

@@ -5,4 +5,5 @@ export const InputSchema = z.object({
   chunkNumber: z.number(),
   fileId: z.number(),
   createdById: z.string(),
+  userId: z.string()
 });
