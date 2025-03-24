@@ -37,7 +37,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     const { csv, chunkNumber, fileId, createdById } = InputSchema.parse(
       await req.json(),
     );
-    
+
     // Parse the CSV string
     const {
       data: rawData,
@@ -48,7 +48,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       skipEmptyLines: true,
       transformHeader: (header) => header.trim().toLowerCase(),
     });
-
 
     // TODO: log csv parsing errors
     if (parseErrors.length > 0) {
@@ -86,47 +85,41 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         result.error !== null,
     );
 
-
     // Process valid rows in batches
     console.log(`Starting to process ${validRows.length} valid rows`);
     const batchStart = performance.now();
 
-    const batches: Promise<unknown>[] = [];
-    for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-      const batch = validRows.slice(i, i + BATCH_SIZE).map(
-        (row) =>
-          ({
-            ...row.data,
-            createdById,
-          }) satisfies NewContact,
-      );
-      // Don't await here, just prepare the insert promise
-      batches.push(db.insert(contacts).values(batch));
-    }
+    const results = await db.transaction(async (tx) => {
+      const batches: Promise<unknown>[] = [];
+      for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+        const batch = validRows.slice(i, i + BATCH_SIZE).map(
+          (row) =>
+            ({
+              ...row.data,
+              createdById,
+            }) satisfies NewContact,
+        );
+        // Don't await here, just prepare the insert promise using the transaction
+        batches.push(tx.insert(contacts).values(batch));
+      }
 
-    console.log(
-      `Prepared ${batches.length} batches in ${performance.now() - batchStart}ms`,
-    );
 
-    const insertStart = performance.now();
-    const results = await Promise.allSettled(batches);
-    const insertEnd = performance.now();
+      return Promise.allSettled(batches);
+    });
+    const batchEnd = performance.now();
 
     const successfulBatches = results.filter(
-      (r) => r.status === "fulfilled",
+      (r): r is PromiseFulfilledResult<unknown> => r.status === "fulfilled",
     ).length;
-    const failedBatches = results.filter((r) => r.status === "rejected").length;
+    const failedBatches = results.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    ).length;
 
     console.log(`Database insertions completed:
-      - Total time: ${insertEnd - insertStart}ms
+      - Total time: ${batchEnd - batchStart}ms
       - Successful batches: ${successfulBatches}
       - Failed batches: ${failedBatches}
-      - Average time per batch: ${Math.floor((insertEnd - insertStart) / batches.length)}ms`);
-
-    const end = performance.now();
-    console.log(
-      `Batch writes for ${chunkNumber} took ${end - start} milliseconds`,
-    );
+    `)
 
     return new Response(
       JSON.stringify({
@@ -135,7 +128,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         validRows: validRows.length,
         invalidRows: invalidRows.length,
         validationErrors: invalidRows,
-        batchesProcessed: batches.length,
         chunkNumber,
         fileId,
       }),
