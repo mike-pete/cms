@@ -65,4 +65,18 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Custom scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-4;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-neutral-900 p-2;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-neutral-700 transition-colors hover:bg-neutral-600;
+    border: 3px solid rgb(23 23 23); /* This creates padding effect in dark mode */
+  }
 }
