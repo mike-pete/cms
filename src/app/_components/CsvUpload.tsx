@@ -6,7 +6,7 @@ import { Button } from "~/components/ui/button";
 import { Progress } from "~/components/ui/progress";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
-import Col from "./Col";
+import Col from "../../components/Col";
 
 export function CsvUpload() {
   const [file, setFile] = useState<File | null>(null);

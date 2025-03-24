@@ -1,4 +1,4 @@
-import Col from "../_components/Col";
+import Col from "../../components/Col";
 import NavBar from "../_components/NavBar";
 
 export default function DefaultLayout({

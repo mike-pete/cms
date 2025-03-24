@@ -12,8 +12,8 @@ import {
   TableRow,
 } from "~/components/ui/table";
 import { api } from "~/trpc/react";
-import Col from "./Col";
-import Row from "./Row";
+import Col from "../../components/Col";
+import Row from "../../components/Row";
 
 export function ContactsTable() {
   const [currentPage, setCurrentPage] = useState(1);

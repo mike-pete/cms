@@ -1,8 +1,8 @@
-import Col from "~/app/_components/Col";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
 import Push from "~/app/_components/Push";
-import Row from "~/app/_components/Row";
+import Col from "~/components/Col";
+import Row from "~/components/Row";
 import { api, HydrateClient } from "~/trpc/server";
 
 export default async function DashboardPage() {
