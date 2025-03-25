@@ -118,7 +118,10 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       return results;
     });
 
-    await pusher.trigger(createdById, "x", "handled chunk");
+    await pusher.trigger(createdById, "chunk-processed", {
+      fileId,
+      chunkNumber,
+    });
 
     const batchEnd = performance.now();
 
