@@ -209,17 +209,6 @@ export const contactRouter = createTRPCRouter({
 
       await pusher.trigger(ctx.session.user.id, "file-chunked", message);
     }),
-
-  sendNotification: protectedProcedure
-    .input(
-      z.object({
-        event: z.string(),
-        data: z.string(),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      await pusher.trigger(ctx.session.user.id, input.event, input.data);
-    }),
   getFilesStatus: protectedProcedure.query(async ({ ctx }) => {
     // Get all files with their chunk counts
     const allFiles = await ctx.db

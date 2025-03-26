@@ -159,23 +159,12 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        message: "CSV processed and contacts inserted",
-        totalRows: rawData.length,
-        validRows: validRows.length,
-        invalidRows: invalidRows.length,
-        validationErrors: invalidRows,
-        chunkNumber,
-        fileId,
-      }),
-      {
-        status: invalidRows.length > 0 ? 206 : 200, // Partial content if some rows failed
-        headers: {
-          "Content-Type": "application/json",
-        },
+    return new Response(null, {
+      status: invalidRows.length > 0 ? 206 : 200, // Partial content if some rows failed
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+    });
   } catch (error) {
     console.error("Error in webhook handler:", error);
     return new Response(

@@ -1,7 +1,6 @@
 import ChunkUpdates from "~/app/_components/ChunkUpdates";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
-import Push from "~/app/_components/Push";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
 import { api, HydrateClient } from "~/trpc/server";
@@ -12,7 +11,7 @@ export default async function DashboardPage() {
     limit: 50,
   });
   await api.contact.getFilesStatus.prefetch();
-  
+
   return (
     <HydrateClient>
       <Row className="h-full flex-1 overflow-hidden">
@@ -25,7 +24,6 @@ export default async function DashboardPage() {
           </Col>
         </Col>
         <Col className="flex h-full flex-1 flex-col gap-4 p-8">
-          <Push />
           <Col className="min-h-0 flex-1">
             <ContactsTable />
           </Col>
