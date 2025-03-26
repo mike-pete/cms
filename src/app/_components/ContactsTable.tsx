@@ -28,7 +28,15 @@ export function ContactsTable() {
   }
 
   if (!data?.contacts.length) {
-    return <div>No contacts found. Try uploading a CSV file.</div>;
+    return (
+      <Col className="flex-1 items-center justify-center rounded-md border border-neutral-700 p-4">
+        <p className="text-center text-xl text-neutral-200">
+          No contacts found.
+          <br />
+          Upload a CSV file to get started.
+        </p>
+      </Col>
+    );
   }
 
   return (

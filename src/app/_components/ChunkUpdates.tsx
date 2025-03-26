@@ -82,6 +82,7 @@ export default function ChunkUpdates() {
 
   return (
     <>
+      {Object.values(files).length === 0 && <p className="text-neutral-500">No files have been uploaded.</p>}
       {Object.values(files)
         .sort(
           (a, b) =>
