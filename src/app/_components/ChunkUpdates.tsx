@@ -5,6 +5,14 @@ import usePusherSub from "../_hooks/userPusherSub";
 
 type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
 
+const dateFormatter = new Intl.DateTimeFormat(undefined, {
+  dateStyle: "medium",
+  timeStyle: "medium",
+});
+
+const formatDate = (date: Date | string) =>
+  dateFormatter.format(new Date(date));
+
 const useFileProgress = () => {
   const { subscribe } = usePusherSub();
   const [files, setFiles] = useState<
@@ -89,7 +97,7 @@ export default function ChunkUpdates() {
                 <div>
                   <h3 className="font-medium">{file.fileName}</h3>
                   <p className="text-sm text-gray-500">
-                    Created {new Date(file.createdAt).toLocaleString()}
+                    Created {formatDate(file.createdAt)}
                   </p>
                 </div>
                 <div className="text-right">

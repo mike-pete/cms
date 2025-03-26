@@ -1,5 +1,5 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import invariant from "tiny-invariant";
@@ -132,12 +132,13 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
           createdAt: files.createdAt,
         })
         .from(files)
-        .leftJoin(chunks, eq(files.id, chunks.fileId))
         .where(eq(files.id, fileId))
+        .leftJoin(chunks, eq(files.id, chunks.fileId))
         .groupBy(files.id)
-        .orderBy(desc(files.createdAt));
+        .limit(1);
 
       invariant(fileStatus, "File not found");
+      invariant(fileStatus.fileName, "File name not found");
 
       const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
         totalChunks: fileStatus.totalChunks,
