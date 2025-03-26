@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
 import {
   Table,
@@ -17,15 +17,17 @@ import Row from "../../components/Row";
 
 export function ContactsTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const { data, isLoading } = api.contact.getContacts.useQuery({
+  const { data: freshData, isLoading } = api.contact.getContacts.useQuery({
     page: currentPage,
     limit: 50,
   });
+  const [data, setData] = useState(freshData);
 
-  // TODO: do something better to show loading state
-  if (isLoading) {
-    return <div>Loading contacts...</div>;
-  }
+  useEffect(() => {
+    if (freshData) {
+      setData(freshData);
+    }
+  }, [freshData]);
 
   if (!data?.contacts.length) {
     return (
@@ -42,7 +44,7 @@ export function ContactsTable() {
   return (
     <Col className="h-full">
       <Col className="flex-1 overflow-hidden rounded-md border border-neutral-700">
-        <div className="h-full overflow-auto">
+        <Col className="relative h-full overflow-auto">
           <Table>
             <TableHeader className="sticky top-0 bg-zinc-950">
               <TableRow className="border-b border-neutral-700">
@@ -68,7 +70,15 @@ export function ContactsTable() {
               ))}
             </TableBody>
           </Table>
-        </div>
+          {isLoading && (
+            <Row className="sticky bottom-0 right-0 flex-1 items-center justify-end p-4">
+              <Row className="items-center gap-2 rounded-md border border-neutral-700 bg-neutral-800 px-4 py-2">
+                <p className="text-lg font-medium">loading</p>
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </Row>
+            </Row>
+          )}
+        </Col>
       </Col>
 
       <div className="mt-4 flex shrink-0 items-center justify-between px-2">
