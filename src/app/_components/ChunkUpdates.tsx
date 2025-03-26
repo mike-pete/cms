@@ -83,7 +83,10 @@ export default function ChunkUpdates() {
   return (
     <>
       {Object.values(files)
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        )
         .map((file) => {
           const completionPercentage = Math.round(
             (file.doneChunks / file.totalChunks) * 100,
