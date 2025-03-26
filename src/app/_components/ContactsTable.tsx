@@ -38,10 +38,10 @@ export function ContactsTable() {
           <Table>
             <TableHeader className="sticky top-0 bg-zinc-950">
               <TableRow className="border-b border-neutral-700">
-                <TableHead>Email</TableHead>
-                <TableHead>First Name</TableHead>
-                <TableHead>Last Name</TableHead>
-                <TableHead>Created At</TableHead>
+                <TableHead>email</TableHead>
+                <TableHead>first name</TableHead>
+                <TableHead>last name</TableHead>
+                <TableHead>created at</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

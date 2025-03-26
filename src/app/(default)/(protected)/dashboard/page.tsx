@@ -19,7 +19,7 @@ export default async function DashboardPage() {
           <CsvUpload />
           <Col className="flex min-h-0 flex-1 overflow-y-auto rounded-md border border-neutral-700">
             <Row className="sticky top-0 border-b border-neutral-700 bg-neutral-950 px-4 py-2">
-              <h2>Uploaded Files</h2>
+              <h2 className="text-neutral-500 text-sm">uploaded files</h2>
             </Row>
             <Col className="gap-4 p-4">
               <ChunkUpdates />
