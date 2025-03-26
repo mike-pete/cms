@@ -59,7 +59,7 @@ export const chunks = createTable("chunks", {
   fileId: integer("file_id")
     .notNull()
     .references(() => files.id, {onDelete: 'cascade'}),
-  chunkNumber: varchar("chunk_number", { length: 256 }).notNull(),
+  chunkNumber: integer("chunk_number").notNull(),
   lineCount: integer("line_count").notNull(),
   status: chunkStatusEnum("status").notNull().default("PENDING"),
   createdAt: timestamp("created_at", { withTimezone: true })

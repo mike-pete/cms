@@ -110,7 +110,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
             .where(
               and(
                 eq(chunks.fileId, fileId),
-                eq(chunks.chunkNumber, chunkNumber.toString()),
+                eq(chunks.chunkNumber, chunkNumber),
               ),
             ),
         );

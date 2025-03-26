@@ -12,6 +12,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import pusher from "~/server/connections/pusher";
 import qstash from "~/server/connections/qstash";
 import s3 from "~/server/connections/s3";
+import { db } from "~/server/db";
 import { chunks, contacts, files } from "~/server/db/schema";
 import { type RouterOutputs } from "~/trpc/react";
 
@@ -20,10 +21,16 @@ async function queueChunk({
   chunkNumber,
   fileId,
   createdById,
-}: z.infer<typeof InputSchema>) {
+  lineCount,
+}: z.infer<typeof InputSchema> & { lineCount: number }) {
   console.log(chunkNumber);
 
-  // TODO update status table
+  await db.insert(chunks).values({
+    fileId,
+    chunkNumber: chunkNumber,
+    lineCount,
+    status: "PENDING" as const,
+  });
 
   await qstash.publishJSON({
     url: `${env.NEXTAUTH_URL}/api/v1/queue/handle-chunks`,
@@ -137,6 +144,7 @@ export const contactRouter = createTRPCRouter({
             fileId: input.fileId,
             chunkNumber: chunkIndex,
             createdById: file.createdById,
+            lineCount: currentChunk.length - 1,
           }),
         );
       };
@@ -168,7 +176,6 @@ export const contactRouter = createTRPCRouter({
         }
       }
 
-      
       // Handle any remaining lines in the last chunk
       if (currentChunk.length > 1) {
         chunkSizes.push({
@@ -180,6 +187,18 @@ export const contactRouter = createTRPCRouter({
 
       await Promise.all(queue);
 
+      const [chunkCount] = await ctx.db
+        .select({ count: sql<number>`CAST(count(*) AS integer)` })
+        .from(chunks)
+        .where(eq(chunks.fileId, input.fileId));
+
+      if (chunkCount?.count !== chunkSizes.length) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Expected ${chunkSizes.length} chunks but got ${chunkCount?.count}`,
+        });
+      }
+
       const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
         totalChunks: chunkSizes.length,
         doneChunks: 0,
@@ -189,29 +208,8 @@ export const contactRouter = createTRPCRouter({
       };
 
       await pusher.trigger(ctx.session.user.id, "file-chunked", message);
-      // Create all chunk records in a single transaction
-      try {
-        await ctx.db.transaction(async (tx) => {
-          await tx.insert(chunks).values(
-            chunkSizes.map((chunk) => ({
-              fileId: input.fileId,
-              chunkNumber: chunk.chunkNumber,
-              lineCount: chunk.lineCount,
-              status: "PENDING" as const,
-            })),
-          );
-        });
-      } catch (error) {
-        console.error("Failed to create chunk records:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create chunk records in database",
-        });
-      }
-
-      const end = performance.now();
-      console.log(`\n\n\n\n\nAll Writes Took ${end - start} milliseconds`);
     }),
+
   sendNotification: protectedProcedure
     .input(
       z.object({
