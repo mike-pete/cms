@@ -15,15 +15,18 @@ export default async function DashboardPage() {
   return (
     <HydrateClient>
       <Row className="h-full flex-1 overflow-hidden">
-        <Col className="max-w-md gap-4 border-r border-neutral-700 p-8">
+        <Col className="flex h-full max-w-md flex-1 gap-4 border-r border-neutral-700 p-8">
           <CsvUpload />
-          <Col className="rounded-md border border-neutral-700 p-4">
-            <Col>
+          <Col className="flex min-h-0 flex-1 overflow-y-auto rounded-md border border-neutral-700">
+            <Row className="sticky top-0 border-b border-neutral-700 bg-neutral-950 px-4 py-2">
+              <h2>Uploaded Files</h2>
+            </Row>
+            <Col className="gap-4 p-4">
               <ChunkUpdates />
             </Col>
           </Col>
         </Col>
-        <Col className="flex h-full flex-1 flex-col gap-4 p-8">
+        <Col className="flex h-full flex-1 gap-4 p-8">
           <Col className="min-h-0 flex-1">
             <ContactsTable />
           </Col>

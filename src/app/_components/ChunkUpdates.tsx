@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import Col from "~/components/Col";
+import Row from "~/components/Row";
 import { api, type RouterOutputs } from "~/trpc/react";
 import usePusherSub from "../_hooks/userPusherSub";
 
@@ -58,19 +60,15 @@ const useFileProgress = () => {
   }, [data]);
 
   useEffect(() => {
-    console.log("Setting up chunk update subscription");
     const fileSub = subscribe<FileUpdate>("file-chunked", (fileUpdate) => {
-      console.log("Received file chunked update:", fileUpdate);
       updateFileProgress([fileUpdate]);
     });
 
     const chunkSub = subscribe<FileUpdate>("chunk-processed", (fileUpdate) => {
-      console.log("Received chunk update:", fileUpdate);
       updateFileProgress([fileUpdate]);
     });
 
     return () => {
-      console.log("cleaning up subscriptions");
       fileSub?.unbind();
       chunkSub?.unbind();
     };
@@ -83,39 +81,42 @@ export default function ChunkUpdates() {
   const files = useFileProgress();
 
   return (
-    <div className="space-y-4 p-4">
-      <h2 className="text-lg font-semibold">Processing Files</h2>
-      <div className="space-y-4">
-        {Object.values(files).map((file) => {
+    <>
+      {Object.values(files)
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .map((file) => {
           const completionPercentage = Math.round(
             (file.doneChunks / file.totalChunks) * 100,
           );
 
           return (
-            <div key={file.fileId} className="rounded-lg border p-4 shadow-sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">{file.fileName}</h3>
-                  <p className="text-sm text-gray-500">
-                    Created {formatDate(file.createdAt)}
+            <Col
+              key={file.fileId}
+              className="gap-1 rounded-lg border border-neutral-700 p-4"
+            >
+              <Row className="flex items-center justify-between">
+                <h3 className="font-medium">{file.fileName}</h3>
+                <p className="text-xs text-neutral-500">
+                  {formatDate(file.createdAt)}
+                </p>
+              </Row>
+              {completionPercentage < 100 && (
+                <Col className="flex-1 gap-1">
+                  <p className="text-xs text-neutral-500">
+                    Processing {completionPercentage}%
                   </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium">
-                    {completionPercentage}% Complete
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4 h-2 w-full rounded-full bg-gray-200">
-                <div
-                  className="h-2 rounded-full bg-blue-600 transition-all duration-500"
-                  style={{ width: `${completionPercentage}%` }}
-                />
-              </div>
-            </div>
+
+                  <div className="h-2 flex-1 rounded-full bg-neutral-200">
+                    <div
+                      className="h-2 rounded-full bg-emerald-600 transition-all duration-500"
+                      style={{ width: `${completionPercentage}%` }}
+                    />
+                  </div>
+                </Col>
+              )}
+            </Col>
           );
         })}
-      </div>
-    </div>
+    </>
   );
 }

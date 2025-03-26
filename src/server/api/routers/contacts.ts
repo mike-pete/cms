@@ -228,7 +228,6 @@ export const contactRouter = createTRPCRouter({
       .leftJoin(chunks, eq(files.id, chunks.fileId))
       .where(eq(files.createdById, ctx.session.user.id))
       .groupBy(files.id)
-      .orderBy(desc(files.createdAt));
 
     const filesStatus = Object.fromEntries(
       allFiles.map((file) => [
