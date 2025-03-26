@@ -1,7 +1,7 @@
 import { GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { createInterface } from "readline";
 import { type Readable } from "stream";
 import invariant from "tiny-invariant";
@@ -168,6 +168,7 @@ export const contactRouter = createTRPCRouter({
         }
       }
 
+      
       // Handle any remaining lines in the last chunk
       if (currentChunk.length > 1) {
         chunkSizes.push({
@@ -177,11 +178,10 @@ export const contactRouter = createTRPCRouter({
         queueCurrentChunk();
       }
 
-      await Promise.allSettled(queue);
+      await Promise.all(queue);
 
       const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
         totalChunks: chunkSizes.length,
-        pendingChunks: new Set<number>(),
         doneChunks: 0,
         fileName: file.fileName,
         createdAt: file.createdAt,
@@ -189,7 +189,6 @@ export const contactRouter = createTRPCRouter({
       };
 
       await pusher.trigger(ctx.session.user.id, "file-chunked", message);
-
       // Create all chunk records in a single transaction
       try {
         await ctx.db.transaction(async (tx) => {
@@ -229,9 +228,11 @@ export const contactRouter = createTRPCRouter({
       .select({
         fileId: files.id,
         fileName: files.fileName,
-        totalChunks: sql<number>`count(${chunks.id})`.as("total_chunks"),
+        totalChunks: sql<number>`CAST(count(${chunks.id}) AS integer)`.as(
+          "total_chunks",
+        ),
         doneChunks:
-          sql<number>`sum(case when ${chunks.status} = 'DONE' then 1 else 0 end)`.as(
+          sql<number>`CAST(count(case when ${chunks.status} = 'DONE' then 1 end) AS integer)`.as(
             "done_chunks",
           ),
         createdAt: files.createdAt,
@@ -242,43 +243,18 @@ export const contactRouter = createTRPCRouter({
       .groupBy(files.id)
       .orderBy(desc(files.createdAt));
 
-    const pendingChunks = await ctx.db
-      .select({
-        fileId: files.id,
-        fileName: files.fileName,
-        chunkNumber: chunks.chunkNumber,
-      })
-      .from(files)
-      .leftJoin(chunks, eq(files.id, chunks.fileId))
-      .where(
-        and(
-          eq(files.createdById, ctx.session.user.id),
-          eq(chunks.status, "PENDING"),
-        ),
-      );
-
     const filesStatus = Object.fromEntries(
       allFiles.map((file) => [
         file.fileId,
         {
-          totalChunks: file.totalChunks,
-          pendingChunks: new Set<number>(),
-          doneChunks: file.doneChunks,
           fileName: file.fileName,
-          createdAt: file.createdAt,
           fileId: file.fileId,
+          totalChunks: file.totalChunks || Infinity,
+          doneChunks: file.doneChunks,
+          createdAt: file.createdAt,
         },
       ]),
     );
-
-    for (const chunk of pendingChunks) {
-      const fileId = chunk.fileId;
-      invariant(chunk.fileId, "File ID is required");
-      invariant(filesStatus[fileId] !== undefined, "File not found");
-      const chunkNumber = Number(chunk.chunkNumber);
-      invariant(Number.isInteger(chunkNumber), "Chunk number is required");
-      filesStatus[fileId].pendingChunks.add(chunkNumber);
-    }
 
     return filesStatus;
   }),

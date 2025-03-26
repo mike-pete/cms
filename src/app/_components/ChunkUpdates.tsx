@@ -3,12 +3,7 @@ import { useEffect, useState } from "react";
 import { api, type RouterOutputs } from "~/trpc/react";
 import usePusherSub from "../_hooks/userPusherSub";
 
-type ChunkUpdate = {
-  type: "CHUNK_PROCESSED";
-  fileId: number;
-  chunkNumber: string;
-  timestamp: string;
-};
+type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
 
 const useFileProgress = () => {
   const { subscribe } = usePusherSub();
@@ -20,44 +15,50 @@ const useFileProgress = () => {
 
   const { data, refetch } = api.contact.getFilesStatus.useQuery();
 
+  const updateFileProgress = (newFiles: FileUpdate[]) => {
+    setFiles((prev) => {
+      const updatedFiles = { ...prev };
+
+      for (const newFile of newFiles) {
+        const fileId = newFile.fileId;
+        const prevFile = updatedFiles[fileId];
+
+        if (!prevFile) {
+          updatedFiles[fileId] = { ...newFile };
+        } else {
+          const doneChunks = Math.max(prevFile.doneChunks, newFile.doneChunks);
+          const totalChunks = Math.max(
+            prevFile.totalChunks === Infinity ? 0 : prevFile.totalChunks,
+            newFile.totalChunks === Infinity ? 0 : newFile.totalChunks,
+          );
+          updatedFiles[fileId] = {
+            ...prevFile,
+            ...newFile,
+            doneChunks,
+            totalChunks,
+          };
+        }
+      }
+      return updatedFiles;
+    });
+  };
+
   useEffect(() => {
     if (data) {
-      setFiles(data);
+      updateFileProgress(Object.values(data));
     }
   }, [data]);
 
   useEffect(() => {
     console.log("Setting up chunk update subscription");
-    const fileSub = subscribe<ChunkUpdate>("file-chunked", (newFile) => {
-      console.log("Received file chunked update:", newFile);
-      setFiles((currentFiles) => ({
-        ...currentFiles,
-        [newFile.fileId]: newFile,
-      }));
-      void refetch();
+    const fileSub = subscribe<FileUpdate>("file-chunked", (fileUpdate) => {
+      console.log("Received file chunked update:", fileUpdate);
+      updateFileProgress([fileUpdate]);
     });
 
-    const chunkSub = subscribe<ChunkUpdate>("chunk-processed", (data) => {
-      console.log("Received chunk update:", data);
-      const { fileId, chunkNumber } = data;
-
-      if (!files[fileId]) {
-        void refetch();
-      } else {
-        const file = files[fileId];
-        if (file.pendingChunks.has(Number(chunkNumber))) {
-          setFiles((currentFiles) => {
-            currentFiles[fileId]?.pendingChunks.delete(Number(chunkNumber));
-            return {
-              ...currentFiles,
-              [fileId]: {
-                ...file,
-                doneChunks: file.doneChunks + 1,
-              },
-            };
-          });
-        }
-      }
+    const chunkSub = subscribe<FileUpdate>("chunk-processed", (fileUpdate) => {
+      console.log("Received chunk update:", fileUpdate);
+      updateFileProgress([fileUpdate]);
     });
 
     return () => {
@@ -65,7 +66,7 @@ const useFileProgress = () => {
       fileSub?.unbind();
       chunkSub?.unbind();
     };
-  }, [subscribe]);
+  }, [subscribe, refetch]);
 
   return files;
 };
@@ -76,26 +77,8 @@ export default function ChunkUpdates() {
   return (
     <div className="space-y-4 p-4">
       <h2 className="text-lg font-semibold">Processing Files</h2>
-
-      {Object.values(files).map((file) => {
-        return (
-          <div key={file.fileId}>
-            <div>
-              <h3 className="font-medium">{file.fileName}</h3>
-              <p className="text-sm text-gray-500">
-                Created {file.createdAt.toLocaleString()}
-              </p>
-            </div>
-
-            <p>
-              {file.doneChunks} of {file.totalChunks} chunks processed
-            </p>
-            <p>{file.pendingChunks.size} pending chunks</p>
-          </div>
-        );
-      })}
-      {/* <div className="space-y-4">
-        {Object.values(fileProgress).map((file) => {
+      <div className="space-y-4">
+        {Object.values(files).map((file) => {
           const completionPercentage = Math.round(
             (file.doneChunks / file.totalChunks) * 100,
           );
@@ -106,15 +89,12 @@ export default function ChunkUpdates() {
                 <div>
                   <h3 className="font-medium">{file.fileName}</h3>
                   <p className="text-sm text-gray-500">
-                    Created {file.createdAt.toLocaleString()}
+                    Created {new Date(file.createdAt).toLocaleString()}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-medium">
                     {completionPercentage}% Complete
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {file.doneChunks} of {file.totalChunks} chunks processed
                   </p>
                 </div>
               </div>
@@ -127,7 +107,7 @@ export default function ChunkUpdates() {
             </div>
           );
         })}
-      </div> */}
+      </div>
     </div>
   );
 }

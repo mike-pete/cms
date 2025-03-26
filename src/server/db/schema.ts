@@ -45,7 +45,7 @@ export const posts = createTable(
 
 export const files = createTable("files", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  fileName: varchar("file_name", { length: 256 }),
+  fileName: varchar("file_name", { length: 256 }).notNull(),
   createdById: varchar("created_by", { length: 255 })
     .notNull()
     .references(() => users.id, {onDelete: 'cascade'}),

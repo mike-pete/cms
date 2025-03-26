@@ -12,6 +12,7 @@ export default async function DashboardPage() {
     limit: 50,
   });
   await api.contact.getFilesStatus.prefetch();
+  
   return (
     <HydrateClient>
       <Row className="h-full flex-1 overflow-hidden">

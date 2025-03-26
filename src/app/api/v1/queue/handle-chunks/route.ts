@@ -1,11 +1,13 @@
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
-import { sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
+import invariant from "tiny-invariant";
 import { z } from "zod";
 import pusher from "~/server/connections/pusher";
 import { db } from "~/server/db";
-import { chunks, contacts } from "~/server/db/schema";
+import { chunks, contacts, files } from "~/server/db/schema";
+import { type RouterOutputs } from "~/trpc/react";
 import { InputSchema } from "./InputSchems";
 
 // Define the schema for CSV rows
@@ -86,57 +88,75 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         result.error !== null,
     );
 
-    // Process valid rows in batches
-    console.log(`Starting to process ${validRows.length} valid rows`);
-    const batchStart = performance.now();
+    try {
+      await db.transaction(async (tx) => {
+        const writes: Promise<unknown>[] = [];
+        for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+          const batch = validRows.slice(i, i + BATCH_SIZE).map(
+            (row) =>
+              ({
+                ...row.data,
+                createdById,
+              }) satisfies NewContact,
+          );
+          // Don't await here, just prepare the insert promise using the transaction
+          writes.push(tx.insert(contacts).values(batch));
+        }
 
-    const results = await db.transaction(async (tx) => {
-      const batches: Promise<unknown>[] = [];
-      for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
-        const batch = validRows.slice(i, i + BATCH_SIZE).map(
-          (row) =>
-            ({
-              ...row.data,
-              createdById,
-            }) satisfies NewContact,
-        );
-        // Don't await here, just prepare the insert promise using the transaction
-        batches.push(tx.insert(contacts).values(batch));
-      }
-
-      // Wait for all batches to complete
-      const results = await Promise.allSettled(batches);
-
-      // Update chunk status to DONE
-      await tx
-        .update(chunks)
-        .set({ status: "DONE" as const })
-        .where(
-          sql`${chunks.fileId} = ${fileId} AND ${chunks.chunkNumber} = ${chunkNumber}`,
+        writes.push(
+          tx
+            .update(chunks)
+            .set({ status: "DONE" as const })
+            .where(
+              and(
+                eq(chunks.fileId, fileId),
+                eq(chunks.chunkNumber, chunkNumber.toString()),
+              ),
+            ),
         );
 
-      return results;
-    });
+        await Promise.all(writes);
+      });
 
-    await pusher.trigger(createdById, "chunk-processed", {
-      fileId,
-      chunkNumber,
-    });
+      const [fileStatus] = await db
+        .select({
+          fileId: files.id,
+          fileName: files.fileName,
+          totalChunks: sql<number>`CAST(count(${chunks.id}) AS integer)`.as(
+            "total_chunks",
+          ),
+          doneChunks:
+            sql<number>`CAST(count(case when ${chunks.status} = 'DONE' then 1 end) AS integer)`.as(
+              "done_chunks",
+            ),
+          createdAt: files.createdAt,
+        })
+        .from(files)
+        .leftJoin(chunks, eq(files.id, chunks.fileId))
+        .where(eq(files.id, fileId))
+        .groupBy(files.id)
+        .orderBy(desc(files.createdAt));
 
-    const batchEnd = performance.now();
+      invariant(fileStatus, "File not found");
 
-    const successfulBatches = results.filter(
-      (r): r is PromiseFulfilledResult<unknown> => r.status === "fulfilled",
-    ).length;
-    const failedBatches = results.filter(
-      (r): r is PromiseRejectedResult => r.status === "rejected",
-    ).length;
+      const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
+        totalChunks: fileStatus.totalChunks,
+        doneChunks: fileStatus.doneChunks,
+        fileName: fileStatus.fileName,
+        createdAt: fileStatus.createdAt,
+        fileId: fileId,
+      };
 
-    console.log(`Database insertions completed:
-      - Total time: ${batchEnd - batchStart}ms
-      - Successful batches: ${successfulBatches}
-      - Failed batches: ${failedBatches}
-    `);
+      await pusher.trigger(createdById, "chunk-processed", message);
+    } catch (error) {
+      console.error("Error in webhook handler:", error);
+      return new Response(
+        JSON.stringify({
+          error: "Error processing message",
+          details: String(error),
+        }),
+      );
+    }
 
     return new Response(
       JSON.stringify({
