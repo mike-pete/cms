@@ -114,45 +114,47 @@ export function CsvUpload() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
-      <label
-        className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed bg-[#192129] p-12 transition-colors",
-          file || isDragging
-            ? "border-emerald-500"
-            : "border-neutral-700 hover:border-neutral-600",
-        )}
-      >
-        <Col className="max-h-[100px] items-center justify-center overflow-hidden">
-          <Image src="/upload.png" alt="CSV" width={200} height={200} />
-        </Col>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          onChange={handleFileChange}
-          disabled={isUploading}
-          className="hidden"
-        />
-        <p className="text-center text-sm text-gray-500">
-          Drag a CSV file here, or click to select
-        </p>
-
-        {isUploading && (
-          <div className="space-y-2">
-            <Progress value={uploadProgress} />
-            <p className="text-center text-sm text-gray-500">
-              {Math.round(uploadProgress)}%
-            </p>
-          </div>
-        )}
-
-        <Button
-          onClick={handleUpload}
-          disabled={!file || isUploading}
-          className="w-full"
+      <label>
+        <Col
+          className={cn(
+            "cursor-pointer items-center justify-center rounded-lg border-2 border-dashed bg-neutral-800 p-8 transition-colors gap-2",
+            file || isDragging
+              ? "border-emerald-500"
+              : "border-neutral-700 hover:border-neutral-600",
+          )}
         >
-          {isUploading ? "Uploading..." : "Upload CSV"}
-        </Button>
+          <Col className="max-h-[100px] items-center justify-center overflow-hidden">
+            <Image src="/upload.png" alt="CSV" width={200} height={200} />
+          </Col>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv"
+            onChange={handleFileChange}
+            disabled={isUploading}
+            className="hidden"
+          />
+          <p className="text-center text-sm text-gray-500">
+            Drag a CSV file here, or click to select
+          </p>
+
+          {isUploading && (
+            <div className="space-y-2">
+              <Progress value={uploadProgress} />
+              <p className="text-center text-sm text-gray-500">
+                {Math.round(uploadProgress)}%
+              </p>
+            </div>
+          )}
+
+          <Button
+            onClick={handleUpload}
+            disabled={!file || isUploading}
+            className="w-full"
+          >
+            {isUploading ? "Uploading..." : "Upload CSV"}
+          </Button>
+        </Col>
       </label>
     </div>
   );
