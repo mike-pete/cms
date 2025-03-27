@@ -29,7 +29,7 @@ export const posts = createTable(
     name: varchar("name", { length: 256 }),
     createdById: varchar("created_by", { length: 255 })
       .notNull()
-      .references(() => users.id, {onDelete: 'cascade'}),
+      .references(() => users.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
@@ -48,7 +48,7 @@ export const files = createTable("files", {
   fileName: varchar("file_name", { length: 256 }).notNull(),
   createdById: varchar("created_by", { length: 255 })
     .notNull()
-    .references(() => users.id, {onDelete: 'cascade'}),
+    .references(() => users.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
@@ -58,7 +58,7 @@ export const chunks = createTable("chunks", {
   id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
   fileId: integer("file_id")
     .notNull()
-    .references(() => files.id, {onDelete: 'cascade'}),
+    .references(() => files.id, { onDelete: "cascade" }),
   chunkNumber: integer("chunk_number").notNull(),
   lineCount: integer("line_count").notNull(),
   status: chunkStatusEnum("status").notNull().default("PENDING"),
@@ -126,7 +126,7 @@ export const sessions = createTable(
       .primaryKey(),
     userId: varchar("user_id", { length: 255 })
       .notNull()
-      .references(() => users.id, {onDelete: 'cascade'}),
+      .references(() => users.id, { onDelete: "cascade" }),
     expires: timestamp("expires", {
       mode: "date",
       withTimezone: true,
@@ -166,5 +166,5 @@ export const contacts = createTable("contacts", {
     .notNull(),
   createdById: varchar("created_by", { length: 255 })
     .notNull()
-    .references(() => users.id, {onDelete: 'cascade'}),
+    .references(() => users.id, { onDelete: "cascade" }),
 });
