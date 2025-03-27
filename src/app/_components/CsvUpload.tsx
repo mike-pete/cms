@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import invariant from "tiny-invariant";
 import { Button } from "~/components/ui/button";
 import { Progress } from "~/components/ui/progress";
 import {
@@ -14,12 +15,11 @@ import {
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import Col from "../../components/Col";
-import invariant from "tiny-invariant";
 
 type ColumnMapping = {
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
 };
 
 export function CsvUpload() {
@@ -28,11 +28,9 @@ export function CsvUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({
-    firstName: null,
-    lastName: null,
-    email: null,
-  });
+  const [columnMapping, setColumnMapping] = useState<Partial<ColumnMapping>>(
+    {},
+  );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { mutateAsync: getUploadUrl } = api.contact.getUploadURL.useMutation();
@@ -91,7 +89,7 @@ export function CsvUpload() {
     const newMapping = { ...columnMapping };
     Object.keys(newMapping).forEach((key) => {
       if (newMapping[key as keyof ColumnMapping] === value) {
-        newMapping[key as keyof ColumnMapping] = null;
+        delete newMapping[key as keyof ColumnMapping];
       }
     });
     newMapping[field] = value;
@@ -100,7 +98,7 @@ export function CsvUpload() {
 
   const getAvailableColumns = (currentField: keyof ColumnMapping) => {
     const mappedColumns = Object.entries(columnMapping)
-      .filter(([key, value]) => key !== currentField && value !== null)
+      .filter(([key, value]) => key !== currentField && value !== undefined)
       .map(([_, value]) => value);
     return headers.filter((header) => !mappedColumns.includes(header));
   };
@@ -108,7 +106,7 @@ export function CsvUpload() {
   const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!file) return;
+    if (!file || !isColumnMappingComplete) return;
 
     try {
       setIsUploading(true);
@@ -142,18 +140,19 @@ export function CsvUpload() {
         xhr.send(file);
       });
 
+      // We need to cast the columnMapping as complete since we've already validated it
+      await processFile({
+        fileId,
+        columnMapping: columnMapping as ColumnMapping,
+      });
+
       alert("Upload completed successfully!");
       setFile(null);
       setHeaders([]);
-      setColumnMapping({
-        firstName: null,
-        lastName: null,
-        email: null,
-      });
+      setColumnMapping({});
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      await processFile({ fileId });
     } catch (error) {
       console.error("Upload error:", error);
       alert("Failed to upload file");
@@ -163,8 +162,10 @@ export function CsvUpload() {
     }
   };
 
-  const isMappingComplete =
-    columnMapping.firstName && columnMapping.lastName && columnMapping.email;
+  const isColumnMappingComplete =
+    columnMapping.firstName !== undefined &&
+    columnMapping.lastName !== undefined &&
+    columnMapping.email !== undefined;
 
   return (
     <div
@@ -207,7 +208,7 @@ export function CsvUpload() {
                 <div className="space-y-2">
                   <p className="text-sm text-neutral-400">First Name</p>
                   <Select
-                    value={columnMapping.firstName ?? undefined}
+                    value={columnMapping.firstName}
                     onValueChange={(value) =>
                       handleColumnMap("firstName", value)
                     }
@@ -228,7 +229,7 @@ export function CsvUpload() {
                 <div className="space-y-2">
                   <p className="text-sm text-neutral-400">Last Name</p>
                   <Select
-                    value={columnMapping.lastName ?? undefined}
+                    value={columnMapping.lastName}
                     onValueChange={(value) =>
                       handleColumnMap("lastName", value)
                     }
@@ -249,7 +250,7 @@ export function CsvUpload() {
                 <div className="space-y-2">
                   <p className="text-sm text-neutral-400">Email</p>
                   <Select
-                    value={columnMapping.email ?? undefined}
+                    value={columnMapping.email}
                     onValueChange={(value) => handleColumnMap("email", value)}
                   >
                     <SelectTrigger>
@@ -280,7 +281,7 @@ export function CsvUpload() {
           {file && (
             <Button
               onClick={handleUpload}
-              disabled={!file || isUploading || !isMappingComplete}
+              disabled={!file || isUploading || !isColumnMappingComplete}
               className="w-full"
             >
               {isUploading ? "Uploading..." : "Upload CSV"}

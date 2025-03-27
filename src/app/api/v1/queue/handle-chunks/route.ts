@@ -3,27 +3,18 @@ import { and, eq, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import invariant from "tiny-invariant";
-import { z } from "zod";
 import pusher from "~/server/connections/pusher";
 import { db } from "~/server/db";
 import { chunks, contacts, files } from "~/server/db/schema";
 import { type RouterOutputs } from "~/trpc/react";
 import { InputSchema } from "./InputSchems";
 
-// Define the schema for CSV rows
-const ContactRowSchema = z
-  .object({
-    email: z.string().email("Invalid email format"),
-    first_name: z.string().optional(),
-    last_name: z.string().optional(),
-  })
-  .transform((data) => ({
-    email: data.email.toLowerCase(),
-    firstName: data.first_name,
-    lastName: data.last_name,
-  }));
+type ContactRow = {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+};
 
-type ContactRow = z.infer<typeof ContactRowSchema>;
 type ValidationResult =
   | { data: ContactRow; error: null; rowIndex: number }
   | { data: null; error: unknown; rowIndex: number };
@@ -37,46 +28,80 @@ const BATCH_SIZE = 5_000;
 
 export const POST = verifySignatureAppRouter(async (req: Request) => {
   try {
-    const { csv, chunkNumber, fileId, createdById } = InputSchema.parse(
-      await req.json(),
-    );
+    const { csv, chunkNumber, fileId, createdById, columnMapping } =
+      InputSchema.parse(await req.json());
 
     // Parse the CSV string
-    const {
-      data: rawData,
-      errors: parseErrors,
-      // meta,
-    } = Papa.parse(csv, {
+    const { data, errors: parseErrors } = Papa.parse(csv, {
       header: true,
-      skipEmptyLines: true,
-      transformHeader: (header) => header.trim().toLowerCase(),
+      skipEmptyLines: "greedy", // Skip empty rows more aggressively
+      transformHeader: (header) => header.trim(),
+      delimitersToGuess: [",", ";", "\t"], // Try to guess the delimiter
     });
 
-    // TODO: log csv parsing errors
+    // Cast the parsed data as an array of records
+    const rawData = data as Record<string, string>[];
+
     if (parseErrors.length > 0) {
-      console.error("CSV parsing errors:", parseErrors);
-      return new Response(
-        JSON.stringify({ error: "CSV parsing errors", details: parseErrors }),
-        { status: 400 },
-      );
+      console.error("CSV parsing errors:", JSON.stringify(parseErrors));
+      // TODO: Handle errors
     }
 
-    // Validate and transform each row
-    const validationResults: ValidationResult[] = rawData.map((row, index) => {
+    // Validate each row
+    const validationResults: ValidationResult[] = [];
+
+    for (let index = 0; index < rawData.length; index++) {
+      const row = rawData[index];
+
       try {
-        return {
-          data: ContactRowSchema.parse(row),
+        // If row doesn't exist or is malformed, skip it
+        if (!row || typeof row !== "object") {
+          throw new Error(`Malformed row at index ${index}`);
+        }
+
+        // Check if email exists
+        if (
+          !Object.prototype.hasOwnProperty.call(row, columnMapping.email) ||
+          !row[columnMapping.email]
+        ) {
+          throw new Error(`Missing email in row ${index + 1}`);
+        }
+
+        const email = String(row[columnMapping.email]).toLowerCase();
+
+        // Validate email format with a basic check
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          throw new Error(`Invalid email format in row ${index + 1}: ${email}`);
+        }
+
+        // Extract firstName and lastName if they exist
+        const firstName = Object.prototype.hasOwnProperty.call(
+          row,
+          columnMapping.firstName,
+        )
+          ? String(row[columnMapping.firstName]) || undefined
+          : undefined;
+
+        const lastName = Object.prototype.hasOwnProperty.call(
+          row,
+          columnMapping.lastName,
+        )
+          ? String(row[columnMapping.lastName]) || undefined
+          : undefined;
+
+        validationResults.push({
+          data: { email, firstName, lastName },
           error: null,
           rowIndex: index,
-        };
+        });
       } catch (error) {
-        return {
+        validationResults.push({
           data: null,
-          error: error instanceof z.ZodError ? error.errors : error,
+          error,
           rowIndex: index,
-        };
+        });
       }
-    });
+    }
 
     const validRows = validationResults.filter(
       (result): result is ValidationResult & { data: ContactRow } =>
@@ -87,6 +112,10 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       (result): result is ValidationResult & { error: unknown } =>
         result.error !== null,
     );
+
+    if (invalidRows.length > 0) {
+      console.log(`${invalidRows.length} invalid rows found`);
+    }
 
     try {
       await db.transaction(async (tx) => {

@@ -6,7 +6,10 @@ import { createInterface } from "readline";
 import { type Readable } from "stream";
 import invariant from "tiny-invariant";
 import { z } from "zod";
-import { type InputSchema } from "~/app/api/v1/queue/handle-chunks/InputSchems";
+import {
+  type ColumnMapping,
+  type InputSchema,
+} from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import pusher from "~/server/connections/pusher";
@@ -22,7 +25,11 @@ async function queueChunk({
   fileId,
   createdById,
   lineCount,
-}: z.infer<typeof InputSchema> & { lineCount: number }) {
+  columnMapping,
+}: z.infer<typeof InputSchema> & {
+  lineCount: number;
+  columnMapping: ColumnMapping;
+}) {
   console.log(chunkNumber);
 
   await db.insert(chunks).values({
@@ -39,6 +46,7 @@ async function queueChunk({
       chunkNumber,
       fileId,
       createdById,
+      columnMapping,
     },
   });
 }
@@ -98,9 +106,17 @@ export const contactRouter = createTRPCRouter({
       return { presignedURL, fileId: file.id };
     }),
   processFile: protectedProcedure
-    .input(z.object({ fileId: z.number() }))
+    .input(
+      z.object({
+        fileId: z.number(),
+        columnMapping: z.object({
+          firstName: z.string(),
+          lastName: z.string(),
+          email: z.string(),
+        }),
+      }),
+    )
     .mutation(async ({ ctx, input }) => {
-      const start = performance.now();
       const file = await ctx.db.query.files.findFirst({
         where: (files, { eq }) => eq(files.id, input.fileId),
       });
@@ -145,6 +161,7 @@ export const contactRouter = createTRPCRouter({
             chunkNumber: chunkIndex,
             createdById: file.createdById,
             lineCount: currentChunk.length - 1,
+            columnMapping: input.columnMapping,
           }),
         );
       };
