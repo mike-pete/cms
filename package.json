@@ -36,6 +36,7 @@
     "@upstash/qstash": "^2.7.22",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
     "drizzle-orm": "^0.41.0",
     "geist": "^1.3.0",
     "lucide-react": "^0.483.0",

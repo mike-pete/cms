@@ -1,19 +1,16 @@
 "use client";
+import dayjs from "dayjs";
+import calendar from "dayjs/plugin/calendar";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useState } from "react";
 import Col from "~/components/Col";
-import Row from "~/components/Row";
 import { api, type RouterOutputs } from "~/trpc/react";
 import usePusherSub from "../_hooks/userPusherSub";
 
+dayjs.extend(relativeTime);
+dayjs.extend(calendar);
+
 type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
-
-const dateFormatter = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "medium",
-});
-
-const formatDate = (date: Date | string) =>
-  dateFormatter.format(new Date(date));
 
 const useFileProgress = () => {
   const { subscribe } = usePusherSub();
@@ -80,9 +77,12 @@ const useFileProgress = () => {
 export default function ChunkUpdates() {
   const files = useFileProgress();
 
+  if (!files || Object.values(files).length === 0) {
+    return null;
+  }
+
   return (
-    <>
-      {Object.values(files).length === 0 && <p className="text-neutral-500">No files have been uploaded.</p>}
+    <div className="space-y-4">
       {Object.values(files)
         .sort(
           (a, b) =>
@@ -94,16 +94,26 @@ export default function ChunkUpdates() {
           );
 
           return (
-            <Col
+            <div
               key={file.fileId}
-              className="gap-1 rounded-lg border border-neutral-700 p-4"
+              className="flex flex-col gap-2 rounded-md border border-neutral-700 p-4"
             >
-              <Row className="flex items-center justify-between">
-                <h3 className="font-medium">{file.fileName}</h3>
-                <p className="text-xs text-neutral-500">
-                  {formatDate(file.createdAt)}
-                </p>
-              </Row>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-200">
+                  {file.fileName}
+                </span>
+                <span
+                  className="text-xs text-neutral-400"
+                  title={dayjs(file.createdAt).format("MMMM D, YYYY h:mm A")}
+                >
+                  {dayjs(file.createdAt).calendar(null, {
+                    sameDay: "[Today at] h:mm A",
+                    lastDay: "[Yesterday at] h:mm A",
+                    lastWeek: "[Last] dddd [at] h:mm A",
+                    sameElse: "MMM D [at] h:mm A",
+                  })}
+                </span>
+              </div>
               {completionPercentage < 100 && (
                 <Col className="flex-1 gap-1">
                   <p className="text-xs text-neutral-500">
@@ -118,9 +128,9 @@ export default function ChunkUpdates() {
                   </div>
                 </Col>
               )}
-            </Col>
+            </div>
           );
         })}
-    </>
+    </div>
   );
 }
