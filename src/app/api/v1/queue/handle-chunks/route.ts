@@ -3,6 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import invariant from "tiny-invariant";
+import { z } from "zod";
 import pusher from "~/server/connections/pusher";
 import { db } from "~/server/db";
 import { chunks, contacts, files } from "~/server/db/schema";
@@ -44,7 +45,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
 
     if (parseErrors.length > 0) {
       console.error("CSV parsing errors:", JSON.stringify(parseErrors));
-      // TODO: Handle errors
+      // TODO: save errors to db
     }
 
     // Validate each row
@@ -54,43 +55,24 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       const row = rawData[index];
 
       try {
-        // If row doesn't exist or is malformed, skip it
-        if (!row || typeof row !== "object") {
-          throw new Error(`Malformed row at index ${index}`);
-        }
+        // TODO: save errors to db
+        invariant(row, "Row is required");
+        invariant(row[columnMapping.email], "Email is required");
 
-        // Check if email exists
-        if (
-          !Object.prototype.hasOwnProperty.call(row, columnMapping.email) ||
-          !row[columnMapping.email]
-        ) {
-          throw new Error(`Missing email in row ${index + 1}`);
-        }
-
-        const email = String(row[columnMapping.email]).toLowerCase();
-
-        // Validate email format with a basic check
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          throw new Error(`Invalid email format in row ${index + 1}: ${email}`);
-        }
-
-        // Extract firstName and lastName if they exist
-        const firstName = Object.prototype.hasOwnProperty.call(
-          row,
-          columnMapping.firstName,
-        )
-          ? String(row[columnMapping.firstName]) || undefined
+        const email = z.string().email().parse(row[columnMapping.email]);
+        const firstName = columnMapping.firstName
+          ? row[columnMapping.firstName]
           : undefined;
-
-        const lastName = Object.prototype.hasOwnProperty.call(
-          row,
-          columnMapping.lastName,
-        )
-          ? String(row[columnMapping.lastName]) || undefined
+        const lastName = columnMapping.lastName
+          ? row[columnMapping.lastName]
           : undefined;
 
         validationResults.push({
-          data: { email, firstName, lastName },
+          data: {
+            email,
+            firstName,
+            lastName,
+          },
           error: null,
           rowIndex: index,
         });

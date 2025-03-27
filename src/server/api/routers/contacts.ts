@@ -110,8 +110,8 @@ export const contactRouter = createTRPCRouter({
       z.object({
         fileId: z.number(),
         columnMapping: z.object({
-          firstName: z.string(),
-          lastName: z.string(),
+          firstName: z.string().optional(),
+          lastName: z.string().optional(),
           email: z.string(),
         }),
       }),
