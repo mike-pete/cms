@@ -4,6 +4,7 @@ import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useState } from "react";
 import Col from "~/components/Col";
+import Row from "~/components/Row";
 import { api, type RouterOutputs } from "~/trpc/react";
 import usePusherSub from "../_hooks/userPusherSub";
 
@@ -98,22 +99,22 @@ export default function ChunkUpdates() {
               key={file.fileId}
               className="flex flex-col gap-2 rounded-md border border-neutral-700 p-4"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-neutral-200">
-                  {file.fileName}
-                </span>
-                <span
-                  className="text-xs text-neutral-400"
-                  title={dayjs(file.createdAt).format("MMMM D, YYYY h:mm A")}
+              <Row className="items-center justify-between gap-2">
+                <p
+                  className="max-w-[70%] truncate text-sm text-neutral-200"
+                  title={file.fileName}
                 >
+                  {file.fileName}
+                </p>
+                <p className="flex-shrink-0 text-xs text-neutral-400" title={dayjs(file.createdAt).format("MMMM D, YYYY h:mm A")}>
                   {dayjs(file.createdAt).calendar(null, {
                     sameDay: "[Today at] h:mm A",
                     lastDay: "[Yesterday at] h:mm A",
                     lastWeek: "[Last] dddd [at] h:mm A",
                     sameElse: "MMM D [at] h:mm A",
                   })}
-                </span>
-              </div>
+                </p>
+              </Row>
               {completionPercentage < 100 && (
                 <Col className="flex-1 gap-1">
                   <p className="text-xs text-neutral-500">

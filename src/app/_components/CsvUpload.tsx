@@ -117,7 +117,7 @@ export function CsvUpload() {
       <label>
         <Col
           className={cn(
-            "cursor-pointer items-center justify-center rounded-lg border-2 border-dashed bg-neutral-800 p-8 transition-colors gap-2",
+            "cursor-pointer items-center justify-center rounded-lg border-2 border-dashed bg-neutral-900 p-8 transition-colors gap-2",
             file || isDragging
               ? "border-emerald-500"
               : "border-neutral-700 hover:border-neutral-600",
