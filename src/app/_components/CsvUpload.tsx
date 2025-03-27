@@ -50,7 +50,7 @@ function ColumnSelector({
         onValueChange={(newValue) => onChange(field, newValue)}
       >
         <SelectTrigger>
-          <SelectValue placeholder="Select a column" />
+          <SelectValue placeholder="select a column" />
         </SelectTrigger>
         <SelectContent>
           {availableColumns.map((header) => (
@@ -186,9 +186,9 @@ export function CsvUpload() {
   };
 
   const columnSelectors = [
+    { label: "email", field: "email" as const, required: true },
     { label: "first name", field: "firstName" as const },
     { label: "last name", field: "lastName" as const },
-    { label: "email", field: "email" as const, required: true },
   ];
 
   const isColumnMappingComplete = columnSelectors.every((selector) =>
@@ -204,7 +204,7 @@ export function CsvUpload() {
       <label>
         <Col
           className={cn(
-            "cursor-pointer items-center justify-center gap-4 rounded-lg border-2 border-dashed bg-neutral-900 p-8 transition-colors",
+            "group cursor-pointer items-center justify-center gap-4 rounded-lg border-2 border-dashed bg-neutral-900 p-8 transition-colors",
             file || isDragging
               ? "border-emerald-500"
               : "border-neutral-700 hover:border-neutral-600",
@@ -213,7 +213,13 @@ export function CsvUpload() {
           {!file ? (
             <>
               <Col className="max-h-[100px] items-center justify-center overflow-hidden">
-                <Image src="/upload.png" alt="CSV" width={200} height={200} />
+                <Image
+                  src="/upload.png"
+                  alt="CSV"
+                  width={200}
+                  height={200}
+                  className="transition-transform duration-200 group-hover:-rotate-[8deg] group-hover:scale-105"
+                />
               </Col>
               <input
                 ref={fileInputRef}
@@ -228,29 +234,24 @@ export function CsvUpload() {
               </p>
             </>
           ) : (
-            <>
-              <p className="text-center text-sm font-medium">
-                Map your CSV columns
-              </p>
-              <div className="w-full space-y-4">
-                {columnSelectors.map((selector) => (
-                  <ColumnSelector
-                    key={selector.field}
-                    label={selector.label}
-                    field={selector.field}
-                    value={columnMapping[selector.field]}
-                    availableColumns={headers}
-                    onChange={(field, value) =>
-                      setColumnMapping({
-                        ...columnMapping,
-                        [field]: value,
-                      })
-                    }
-                    required={selector.required}
-                  />
-                ))}
-              </div>
-            </>
+            <Col className="w-full gap-2">
+              {columnSelectors.map((selector) => (
+                <ColumnSelector
+                  key={selector.field}
+                  label={selector.label}
+                  field={selector.field}
+                  value={columnMapping[selector.field]}
+                  availableColumns={headers}
+                  onChange={(field, value) =>
+                    setColumnMapping({
+                      ...columnMapping,
+                      [field]: value,
+                    })
+                  }
+                  required={selector.required}
+                />
+              ))}
+            </Col>
           )}
 
           {isUploading && (
