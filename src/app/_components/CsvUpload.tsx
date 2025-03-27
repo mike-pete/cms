@@ -17,10 +17,52 @@ import { api } from "~/trpc/react";
 import Col from "../../components/Col";
 
 type ColumnMapping = {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
 };
+
+type ColumnSelectorProps = {
+  label: string;
+  field: keyof ColumnMapping;
+  value: string | undefined;
+  availableColumns: string[];
+  onChange: (field: keyof ColumnMapping, value: string) => void;
+  required?: boolean;
+};
+
+function ColumnSelector({
+  label,
+  field,
+  value,
+  availableColumns,
+  onChange,
+  required = false,
+}: ColumnSelectorProps) {
+  return (
+    <Col className="gap-0.5">
+      <p className="text-sm text-neutral-400">
+        {label}
+        {required && <span className="ml-1 text-red-500">*</span>}
+      </p>
+      <Select
+        value={value}
+        onValueChange={(newValue) => onChange(field, newValue)}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Select a column" />
+        </SelectTrigger>
+        <SelectContent>
+          {availableColumns.map((header) => (
+            <SelectItem key={header} value={header}>
+              {header}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </Col>
+  );
+}
 
 export function CsvUpload() {
   const [file, setFile] = useState<File | null>(null);
@@ -84,25 +126,6 @@ export function CsvUpload() {
     }
   };
 
-  const handleColumnMap = (field: keyof ColumnMapping, value: string) => {
-    // Remove the selected value from other mappings to ensure exclusivity
-    const newMapping = { ...columnMapping };
-    Object.keys(newMapping).forEach((key) => {
-      if (newMapping[key as keyof ColumnMapping] === value) {
-        delete newMapping[key as keyof ColumnMapping];
-      }
-    });
-    newMapping[field] = value;
-    setColumnMapping(newMapping);
-  };
-
-  const getAvailableColumns = (currentField: keyof ColumnMapping) => {
-    const mappedColumns = Object.entries(columnMapping)
-      .filter(([key, value]) => key !== currentField && value !== undefined)
-      .map(([_, value]) => value);
-    return headers.filter((header) => !mappedColumns.includes(header));
-  };
-
   const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -162,10 +185,15 @@ export function CsvUpload() {
     }
   };
 
-  const isColumnMappingComplete =
-    columnMapping.firstName !== undefined &&
-    columnMapping.lastName !== undefined &&
-    columnMapping.email !== undefined;
+  const columnSelectors = [
+    { label: "first name", field: "firstName" as const },
+    { label: "last name", field: "lastName" as const },
+    { label: "email", field: "email" as const, required: true },
+  ];
+
+  const isColumnMappingComplete = columnSelectors.every((selector) =>
+    selector.required ? columnMapping[selector.field] !== undefined : true,
+  );
 
   return (
     <div
@@ -205,66 +233,22 @@ export function CsvUpload() {
                 Map your CSV columns
               </p>
               <div className="w-full space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-neutral-400">First Name</p>
-                  <Select
-                    value={columnMapping.firstName}
-                    onValueChange={(value) =>
-                      handleColumnMap("firstName", value)
+                {columnSelectors.map((selector) => (
+                  <ColumnSelector
+                    key={selector.field}
+                    label={selector.label}
+                    field={selector.field}
+                    value={columnMapping[selector.field]}
+                    availableColumns={headers}
+                    onChange={(field, value) =>
+                      setColumnMapping({
+                        ...columnMapping,
+                        [field]: value,
+                      })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a column" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableColumns("firstName").map((header) => (
-                        <SelectItem key={header} value={header}>
-                          {header}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm text-neutral-400">Last Name</p>
-                  <Select
-                    value={columnMapping.lastName}
-                    onValueChange={(value) =>
-                      handleColumnMap("lastName", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a column" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableColumns("lastName").map((header) => (
-                        <SelectItem key={header} value={header}>
-                          {header}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-sm text-neutral-400">Email</p>
-                  <Select
-                    value={columnMapping.email}
-                    onValueChange={(value) => handleColumnMap("email", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a column" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {getAvailableColumns("email").map((header) => (
-                        <SelectItem key={header} value={header}>
-                          {header}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                    required={selector.required}
+                  />
+                ))}
               </div>
             </>
           )}
