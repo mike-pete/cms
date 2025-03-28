@@ -19,8 +19,6 @@ const useFileProgress = () => {
     RouterOutputs["contact"]["getFilesStatus"]
   >({});
 
-  console.log("\n\nfiles", files);
-
   const { data, refetch } = api.contact.getFilesStatus.useQuery();
 
   const updateFileProgress = (newFiles: FileUpdate[]) => {
@@ -58,12 +56,12 @@ const useFileProgress = () => {
   }, [data]);
 
   useEffect(() => {
-    const fileSub = subscribe<FileUpdate>("file-chunked", (fileUpdate) => {
-      updateFileProgress([fileUpdate]);
+    const fileSub = subscribe('fileChunked', (fileUpdate) => {
+      updateFileProgress([{...fileUpdate, createdAt: new Date(fileUpdate.createdAt)}]);
     });
 
-    const chunkSub = subscribe<FileUpdate>("chunk-processed", (fileUpdate) => {
-      updateFileProgress([fileUpdate]);
+    const chunkSub = subscribe("chunkProcessed", (fileUpdate) => {
+      updateFileProgress([{ ...fileUpdate, createdAt: new Date(fileUpdate.createdAt) }]);
     });
 
     return () => {

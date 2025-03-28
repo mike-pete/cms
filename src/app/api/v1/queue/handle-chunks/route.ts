@@ -4,10 +4,9 @@ import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import invariant from "tiny-invariant";
 import { z } from "zod";
-import pusher from "~/server/connections/pusher";
+import pub from "~/server/connections/pusher";
 import { db } from "~/server/db";
 import { chunks, contacts, files } from "~/server/db/schema";
-import { type RouterOutputs } from "~/trpc/react";
 import { InputSchema } from "./InputSchems";
 
 type ContactRow = {
@@ -151,15 +150,13 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       invariant(fileStatus, "File not found");
       invariant(fileStatus.fileName, "File name not found");
 
-      const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
+      await pub.chunkProcessed(createdById, {
         totalChunks: fileStatus.totalChunks,
         doneChunks: fileStatus.doneChunks,
         fileName: fileStatus.fileName,
-        createdAt: fileStatus.createdAt,
+        createdAt: fileStatus.createdAt.toISOString(),
         fileId: fileId,
-      };
-
-      await pusher.trigger(createdById, "chunk-processed", message);
+      });
     } catch (error) {
       console.error("Error in webhook handler:", error);
       return new Response(

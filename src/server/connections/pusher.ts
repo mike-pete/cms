@@ -1,5 +1,7 @@
 import PusherServer from "pusher";
+import { type z } from "zod";
 import { env } from "~/env";
+import { pusherEvents } from "~/lib/pusher";
 
 const pusher = new PusherServer({
   appId: env.PUSHER_APP_ID,
@@ -9,21 +11,32 @@ const pusher = new PusherServer({
   useTLS: true,
 });
 
-// const pub = {
-//   fileChunkingProgress: {
-//     trigger: (
-//       userId: string,
-//       message: z.infer<typeof pusherMessages.fileChunkingProgress>,
-//     ) => {
+type EventKey = keyof typeof pusherEvents;
 
-//     },
-//   },
-// };
+type TypedPusher = {
+  [K in EventKey]: (
+    userId: string,
+    message: z.infer<(typeof pusherEvents)[K]>,
+  ) => Promise<void>;
+};
 
-export default pusher;
+const handler: ProxyHandler<TypedPusher> = {
+  get: function (_, prop: string) {
+    return async function (userId: string, message: unknown) {
+      const messageType = prop as EventKey;
+      const schema = pusherEvents[messageType];
 
-// await pusher.trigger(ctx.session.user.id, "file-chunked", {
-//   fileId: input.fileId,
-//   chunkingProgress: 100,
-//   chunkingCompleted: true,
-// });
+      if (!schema) {
+        throw new Error(`Unknown message type: ${messageType}`);
+      }
+
+      const validatedMessage = schema.parse(message);
+
+      return await pusher.trigger(userId, messageType, validatedMessage);
+    };
+  },
+};
+
+const pub = new Proxy({} as TypedPusher, handler);
+
+export default pub;

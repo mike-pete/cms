@@ -12,12 +12,11 @@ import {
 } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { env } from "~/env";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-import pusher from "~/server/connections/pusher";
+import pub from "~/server/connections/pusher";
 import qstash from "~/server/connections/qstash";
 import s3 from "~/server/connections/s3";
 import { db } from "~/server/db";
 import { chunks, contacts, files } from "~/server/db/schema";
-import { type RouterOutputs } from "~/trpc/react";
 
 async function queueChunk({
   csv,
@@ -221,15 +220,13 @@ export const contactRouter = createTRPCRouter({
         .set({ chunkingCompleted: true })
         .where(eq(files.id, input.fileId));
 
-      const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
+      await pub.fileChunked(ctx.session.user.id, {
         totalChunks: chunkSizes.length,
         doneChunks: 0,
         fileName: file.fileName,
-        createdAt: file.createdAt,
+        createdAt: file.createdAt.toISOString(),
         fileId: input.fileId,
-      };
-
-      await pusher.trigger(ctx.session.user.id, "file-chunked", message);
+      });
     }),
   getFilesStatus: protectedProcedure.query(async ({ ctx }) => {
     // Get all files with their chunk counts
