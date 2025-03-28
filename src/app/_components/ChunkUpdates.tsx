@@ -5,9 +5,9 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { useEffect, useState } from "react";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
+import { cn } from "~/lib/utils";
 import { api, type RouterOutputs } from "~/trpc/react";
 import usePusherSub from "../_hooks/userPusherSub";
-
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
@@ -106,7 +106,10 @@ export default function ChunkUpdates() {
                 >
                   {file.fileName}
                 </p>
-                <p className="flex-shrink-0 text-xs text-neutral-400" title={dayjs(file.createdAt).format("MMMM D, YYYY h:mm A")}>
+                <p
+                  className="flex-shrink-0 text-xs text-neutral-400"
+                  title={dayjs(file.createdAt).format("MMMM D, YYYY h:mm A")}
+                >
                   {dayjs(file.createdAt).calendar(null, {
                     sameDay: "[Today at] h:mm A",
                     lastDay: "[Yesterday at] h:mm A",
@@ -115,23 +118,58 @@ export default function ChunkUpdates() {
                   })}
                 </p>
               </Row>
+              {/* {completionPercentage < 100 && (
+                <Col className="flex-1 gap-1">
+                  <p className="text-xs text-neutral-500">
+                    Uploading {completionPercentage}%
+                  </p>
+                  <ProgressBar completionPercentage={completionPercentage} />
+                </Col>
+              )} */}
+              {/* {completionPercentage < 100 && (
+                <Col className="flex-1 gap-1">
+                  <p className="text-xs text-neutral-500">
+                    Queueing {completionPercentage}%
+                  </p>
+                  <ProgressBar completionPercentage={completionPercentage} />
+                </Col>
+              )} */}
               {completionPercentage < 100 && (
                 <Col className="flex-1 gap-1">
                   <p className="text-xs text-neutral-500">
                     Processing {completionPercentage}%
                   </p>
-
-                  <div className="h-2 flex-1 rounded-full bg-neutral-200">
-                    <div
-                      className="h-2 rounded-full bg-emerald-600 transition-all duration-500"
-                      style={{ width: `${completionPercentage}%` }}
-                    />
-                  </div>
+                  <ProgressBar completionPercentage={completionPercentage} />
                 </Col>
               )}
             </div>
           );
         })}
+    </div>
+  );
+}
+
+function ProgressBar({
+  completionPercentage,
+  className,
+  title,
+}: {
+  completionPercentage: number;
+  className?: string;
+  title?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "bg-neutral-8l00 h-2 flex-1 rounded-full bg-neutral-800",
+        className,
+      )}
+      title={title}
+    >
+      <div
+        className="h-2 rounded-full bg-emerald-600 transition-all duration-500"
+        style={{ width: `${completionPercentage}%` }}
+      />
     </div>
   );
 }

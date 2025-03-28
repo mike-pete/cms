@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  boolean,
   index,
   integer,
   pgEnum,
@@ -52,6 +53,7 @@ export const files = createTable("files", {
   createdAt: timestamp("created_at", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),
+  chunkingCompleted: boolean("chunking_completed").notNull().default(false),
 });
 
 export const chunks = createTable("chunks", {
