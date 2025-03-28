@@ -9,4 +9,21 @@ const pusher = new PusherServer({
   useTLS: true,
 });
 
+// const pub = {
+//   fileChunkingProgress: {
+//     trigger: (
+//       userId: string,
+//       message: z.infer<typeof pusherMessages.fileChunkingProgress>,
+//     ) => {
+
+//     },
+//   },
+// };
+
 export default pusher;
+
+// await pusher.trigger(ctx.session.user.id, "file-chunked", {
+//   fileId: input.fileId,
+//   chunkingProgress: 100,
+//   chunkingCompleted: true,
+// });

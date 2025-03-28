@@ -216,6 +216,11 @@ export const contactRouter = createTRPCRouter({
         });
       }
 
+      await ctx.db
+        .update(files)
+        .set({ chunkingCompleted: true })
+        .where(eq(files.id, input.fileId));
+
       const message: RouterOutputs["contact"]["getFilesStatus"][number] = {
         totalChunks: chunkSizes.length,
         doneChunks: 0,
