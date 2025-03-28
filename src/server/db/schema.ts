@@ -44,30 +44,42 @@ export const posts = createTable(
   }),
 );
 
-export const files = createTable("files", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  fileName: varchar("file_name", { length: 256 }).notNull(),
-  createdById: varchar("created_by", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-  chunkingCompleted: boolean("chunking_completed").notNull().default(false),
-});
+export const files = createTable(
+  "files",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    fileName: varchar("file_name", { length: 256 }).notNull(),
+    createdById: varchar("created_by", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    chunkingCompleted: boolean("chunking_completed").notNull().default(false),
+  },
+  (file) => ({
+    createdByIdIdx: index("files_created_by_idx").on(file.createdById),
+  }),
+);
 
-export const chunks = createTable("chunks", {
-  id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
-  fileId: integer("file_id")
-    .notNull()
-    .references(() => files.id, { onDelete: "cascade" }),
-  chunkNumber: integer("chunk_number").notNull(),
-  lineCount: integer("line_count").notNull(),
-  status: chunkStatusEnum("status").notNull().default("PENDING"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-});
+export const chunks = createTable(
+  "chunks",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    fileId: integer("file_id")
+      .notNull()
+      .references(() => files.id, { onDelete: "cascade" }),
+    chunkNumber: integer("chunk_number").notNull(),
+    lineCount: integer("line_count").notNull(),
+    status: chunkStatusEnum("status").notNull().default("PENDING"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (chunk) => ({
+    fileIdIdx: index("chunks_file_id_idx").on(chunk.fileId),
+  }),
+);
 
 export const users = createTable("user", {
   id: varchar("id", { length: 255 })
@@ -158,15 +170,22 @@ export const verificationTokens = createTable(
   }),
 );
 
-export const contacts = createTable("contacts", {
-  id: serial("id").primaryKey(),
-  email: varchar("email", { length: 255 }).notNull(),
-  firstName: varchar("first_name", { length: 255 }),
-  lastName: varchar("last_name", { length: 255 }),
-  createdAt: timestamp("created_at")
-    .default(sql`CURRENT_TIMESTAMP`)
-    .notNull(),
-  createdById: varchar("created_by", { length: 255 })
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-});
+export const contacts = createTable(
+  "contacts",
+  {
+    id: serial("id").primaryKey(),
+    email: varchar("email", { length: 255 }).notNull(),
+    firstName: varchar("first_name", { length: 255 }),
+    lastName: varchar("last_name", { length: 255 }),
+    createdAt: timestamp("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+    createdById: varchar("created_by", { length: 255 })
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (contact) => ({
+    createdByIdIdx: index("contacts_created_by_idx").on(contact.createdById),
+    createdAtIdx: index("contacts_created_at_idx").on(contact.createdAt),
+  }),
+);
