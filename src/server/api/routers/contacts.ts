@@ -220,13 +220,12 @@ export const contactRouter = createTRPCRouter({
         .set({ chunkingCompleted: true })
         .where(eq(files.id, input.fileId));
 
-      await pub.fileChunked(ctx.session.user.id, {
-        totalChunks: chunkSizes.length,
-        doneChunks: 0,
-        fileName: file.fileName,
-        createdAt: file.createdAt.toISOString(),
-        fileId: input.fileId,
-      });
+      // await pub.fileChunked(ctx.session.user.id, {
+      //   totalChunks: chunkSizes.length,
+      //   doneChunks: 0,
+      //   chunkingCompleted: file.chunkingCompleted,
+      //   fileId: input.fileId,
+      // });
     }),
   getFilesStatus: protectedProcedure.query(async ({ ctx }) => {
     // Get all files with their chunk counts
@@ -242,6 +241,7 @@ export const contactRouter = createTRPCRouter({
             "done_chunks",
           ),
         createdAt: files.createdAt,
+        chunkingCompleted: files.chunkingCompleted,
       })
       .from(files)
       .leftJoin(chunks, eq(files.id, chunks.fileId))
@@ -256,6 +256,7 @@ export const contactRouter = createTRPCRouter({
           fileId: file.fileId,
           totalChunks: file.totalChunks || Infinity,
           doneChunks: file.doneChunks,
+          chunkingCompleted: file.chunkingCompleted,
           createdAt: file.createdAt,
         },
       ]),

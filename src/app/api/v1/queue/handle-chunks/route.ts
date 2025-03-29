@@ -132,6 +132,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
         .select({
           fileId: files.id,
           fileName: files.fileName,
+          chunkingCompleted: files.chunkingCompleted,
           totalChunks: sql<number>`CAST(count(${chunks.id}) AS integer)`.as(
             "total_chunks",
           ),
@@ -150,13 +151,16 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       invariant(fileStatus, "File not found");
       invariant(fileStatus.fileName, "File name not found");
 
-      await pub.chunkProcessed(createdById, {
-        totalChunks: fileStatus.totalChunks,
-        doneChunks: fileStatus.doneChunks,
-        fileName: fileStatus.fileName,
-        createdAt: fileStatus.createdAt.toISOString(),
-        fileId: fileId,
-      });
+      if (fileStatus.chunkingCompleted) {
+        await pub.chunkProcessed(createdById, {
+          createdAt: fileStatus.createdAt.toISOString(),
+          fileName: fileStatus.fileName,
+          totalChunks: fileStatus.totalChunks,
+          doneChunks: fileStatus.doneChunks,
+          fileId: fileId,
+          chunkingCompleted: fileStatus.chunkingCompleted,
+        });
+      }
     } catch (error) {
       console.error("Error in webhook handler:", error);
       return new Response(

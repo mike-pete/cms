@@ -8,17 +8,15 @@ export const pusherClient = new PusherClient(env.NEXT_PUBLIC_PUSHER_KEY, {
 
 export const pusherEvents = {
   chunkProcessed: z.object({
-    fileId: z.number(),
+    chunkingCompleted: z.boolean(),
     totalChunks: z.number(),
     doneChunks: z.number(),
+    fileId: z.number(),
+    createdAt: z.string(),
     fileName: z.string(),
-    createdAt: z.string().datetime(),
   }),
   fileChunked: z.object({
-    totalChunks: z.number(),
-    doneChunks: z.number(),
-    fileName: z.string(),
-    createdAt: z.string().datetime(),
+    chunkingCompleted: z.boolean(),
     fileId: z.number(),
   }),
 } as const satisfies Record<string, z.ZodSchema>;

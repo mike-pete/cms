@@ -169,7 +169,7 @@ export function CsvUpload() {
         columnMapping: columnMapping as ColumnMapping,
       });
 
-      alert("Upload completed successfully!");
+      console.log("Upload completed successfully!");
       setFile(null);
       setHeaders([]);
       setColumnMapping({});

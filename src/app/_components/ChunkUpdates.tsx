@@ -17,13 +17,20 @@ export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
   return (
     <div className="space-y-4">
       {Object.values(files)
+        .filter(
+          (file) => file.createdAt !== undefined && file.fileName !== undefined,
+        )
         .sort(
           (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            new Date(b.createdAt ?? 0).getTime() -
+            new Date(a.createdAt ?? 0).getTime(),
         )
         .map((file) => {
-          const completionPercentage = Math.round(
-            (file.doneChunks / file.totalChunks) * 100,
+          const chunkingCompletionPercentage = Number(
+            file.chunking.percentage.toFixed(0),
+          );
+          const processingCompletionPercentage = Number(
+            file.processing.percentage.toFixed(0),
           );
 
           return (
@@ -58,20 +65,24 @@ export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
                   <ProgressBar completionPercentage={completionPercentage} />
                 </Col>
               )} */}
-              {/* {completionPercentage < 100 && (
+              {chunkingCompletionPercentage < 100 && (
                 <Col className="flex-1 gap-1">
                   <p className="text-xs text-neutral-500">
-                    Queueing {completionPercentage}%
+                    Queueing {chunkingCompletionPercentage}%
                   </p>
-                  <ProgressBar completionPercentage={completionPercentage} />
+                  <ProgressBar
+                    completionPercentage={chunkingCompletionPercentage}
+                  />
                 </Col>
-              )} */}
-              {completionPercentage < 100 && (
+              )}
+              {processingCompletionPercentage < 100 && (
                 <Col className="flex-1 gap-1">
                   <p className="text-xs text-neutral-500">
-                    Processing {completionPercentage}%
+                    Processing {processingCompletionPercentage}%
                   </p>
-                  <ProgressBar completionPercentage={completionPercentage} />
+                  <ProgressBar
+                    completionPercentage={processingCompletionPercentage}
+                  />
                 </Col>
               )}
             </div>
