@@ -148,14 +148,29 @@ export const contactRouter = createTRPCRouter({
       let headers: string | null = null;
       let currentChunk: string[] = [];
       let chunkIndex = 0;
+      let bytesProcessed = 0;
       const CHUNK_SIZE = 10_000;
+      const chunkSizes: { chunkNumber: string; lineCount: number }[] = [];
+      const totalSize = Number(response.ContentLength ?? 0);
 
       const queue: Promise<void>[] = [];
 
       const queueCurrentChunk = () => {
+        if (!currentChunk || currentChunk.length <= 1) return; // Skip empty chunks
+
+        // Calculate bytes processed for this chunk
+        const chunkContent = currentChunk.join("\n");
+        bytesProcessed += Buffer.byteLength(chunkContent, "utf8");
+
+        // Calculate percentage based on bytes processed vs total file size
+        const chunkingPercentage =
+          totalSize > 0
+            ? Math.min(Math.round((bytesProcessed / totalSize) * 100), 99) // Cap at 99% until fully complete
+            : 0;
+
         queue.push(
           queueChunk({
-            csv: currentChunk.join("\n"),
+            csv: chunkContent,
             fileId: input.fileId,
             chunkNumber: chunkIndex,
             createdById: file.createdById,
@@ -163,10 +178,17 @@ export const contactRouter = createTRPCRouter({
             columnMapping: input.columnMapping,
           }),
         );
+
+        void pub.chunkQueued(ctx.session.user.id, {
+          fileName: file.fileName,
+          createdAt: file.createdAt.toISOString(),
+          chunkingCompleted: false,
+          chunkingPercentage,
+          fileId: input.fileId,
+        });
       };
 
-      const chunkSizes: { chunkNumber: string; lineCount: number }[] = [];
-
+      // Process chunks
       for await (const line of rl) {
         // Handle headers
         if (!headers) {
@@ -192,7 +214,6 @@ export const contactRouter = createTRPCRouter({
         }
       }
 
-      // Handle any remaining lines in the last chunk
       if (currentChunk.length > 1) {
         chunkSizes.push({
           chunkNumber: String(chunkIndex),
@@ -220,12 +241,13 @@ export const contactRouter = createTRPCRouter({
         .set({ chunkingCompleted: true })
         .where(eq(files.id, input.fileId));
 
-      // await pub.fileChunked(ctx.session.user.id, {
-      //   totalChunks: chunkSizes.length,
-      //   doneChunks: 0,
-      //   chunkingCompleted: file.chunkingCompleted,
-      //   fileId: input.fileId,
-      // });
+      await pub.chunkQueued(ctx.session.user.id, {
+        fileName: file.fileName,
+        createdAt: file.createdAt.toISOString(),
+        chunkingCompleted: true,
+        chunkingPercentage: 100,
+        fileId: input.fileId,
+      });
     }),
   getFilesStatus: protectedProcedure.query(async ({ ctx }) => {
     // Get all files with their chunk counts

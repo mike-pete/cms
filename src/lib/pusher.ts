@@ -15,8 +15,11 @@ export const pusherEvents = {
     createdAt: z.string(),
     fileName: z.string(),
   }),
-  fileChunked: z.object({
-    chunkingCompleted: z.boolean(),
+  chunkQueued: z.object({
+    fileName: z.string(),
     fileId: z.number(),
+    createdAt: z.string(),
+    chunkingCompleted: z.boolean(),
+    chunkingPercentage: z.number(),
   }),
 } as const satisfies Record<string, z.ZodSchema>;

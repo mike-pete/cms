@@ -40,7 +40,13 @@ const useFileStatuses = () => {
 
   console.log("files", files);
 
-  const updateFiles = (files: ({ fileId: number, fileName: string, createdAt: Date } & Partial<FileStatus>)[]) => {
+  const updateFiles = (
+    files: ({
+      fileId: number;
+      fileName: string;
+      createdAt: Date;
+    } & Partial<FileStatus>)[],
+  ) => {
     setFiles((prev) => {
       const updatedFiles = { ...prev };
       for (const file of files) {
@@ -128,17 +134,29 @@ const useFileStatuses = () => {
 
   // TODO: sync with upload
 
-  // TODO: sync with chunking
-
-  //     const chunkSub = subscribe("chunkProcessed", (fileUpdate) => {
-  //       updateFileProgress({
-  //         ...fileUpdate,
-  //         createdAt: new Date(fileUpdate.createdAt),
-  //       });
-  //     });
-  // TODO: sync with processing
   useEffect(() => {
-    const fileSub = subscribe(
+    const chunking = subscribe(
+      "chunkQueued",
+      ({
+        fileId,
+        fileName,
+        createdAt,
+        chunkingCompleted,
+        chunkingPercentage,
+      }) => {
+        const update = {
+          fileId,
+          fileName,
+          createdAt: new Date(createdAt),
+          chunking: {
+            percentage: chunkingCompleted ? 100 : chunkingPercentage,
+          },
+        };
+        updateFile(update);
+      },
+    );
+
+    const chunkProcessing = subscribe(
       "chunkProcessed",
       ({
         createdAt,
@@ -159,82 +177,17 @@ const useFileStatuses = () => {
             errorCount: 0,
           },
         };
-        console.log("update", update);
         updateFile(update);
       },
     );
+
     return () => {
-      fileSub?.unbind();
+      chunking?.unbind();
+      chunkProcessing?.unbind();
     };
   }, [subscribe]);
 
   return Object.values(files);
 };
-
-// const useFileStatuses = () => {
-//   const { subscribe } = usePusherSub();
-//   const [files, setFiles] = useState<FileStatus[]>([]);
-
-//   const { data, refetch } = api.contact.getFilesStatus.useQuery();
-
-//   const updateFileProgress = (
-//     newFile: { fileId: string } & Partial<FileUpdate>,
-//   ) => {
-//     setFiles((prev) => {
-//       const updatedFiles = { ...prev };
-
-//       const fileId = newFile.fileId;
-//       const prevFile = updatedFiles[fileId];
-//       const chunkingCompletionPercentage =
-//         prevFile?.chunkingCompletionPercentage ?? 0;
-
-//       if (!prevFile) {
-//         updatedFiles[fileId] = { ...newFile, chunkingCompletionPercentage };
-//       } else {
-//         const doneChunks = Math.max(prevFile.doneChunks, newFile.doneChunks);
-//         const totalChunks = Math.max(
-//           prevFile.totalChunks === Infinity ? 0 : prevFile.totalChunks,
-//           newFile.totalChunks === Infinity ? 0 : newFile.totalChunks,
-//         );
-//         updatedFiles[fileId] = {
-//           ...prevFile,
-//           ...newFile,
-//           doneChunks,
-//           totalChunks,
-//         };
-//       }
-//       return updatedFiles;
-//     });
-//   };
-
-//   useEffect(() => {
-//     if (data) {
-//       updateFileProgress(Object.values(data));
-//     }
-//   }, [data]);
-
-//   useEffect(() => {
-//     const fileSub = subscribe("fileChunked", (fileUpdate) => {
-//       updateFileProgress({
-//         ...fileUpdate,
-//         createdAt: new Date(fileUpdate.createdAt),
-//       });
-//     });
-
-//     const chunkSub = subscribe("chunkProcessed", (fileUpdate) => {
-//       updateFileProgress({
-//         ...fileUpdate,
-//         createdAt: new Date(fileUpdate.createdAt),
-//       });
-//     });
-
-//     return () => {
-//       fileSub?.unbind();
-//       chunkSub?.unbind();
-//     };
-//   }, [subscribe, refetch]);
-
-//   return files;
-// };
 
 export default useFileStatuses;

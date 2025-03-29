@@ -65,25 +65,27 @@ export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
                   <ProgressBar completionPercentage={completionPercentage} />
                 </Col>
               )} */}
-              {chunkingCompletionPercentage < 100 && (
-                <Col className="flex-1 gap-1">
-                  <p className="text-xs text-neutral-500">
-                    Queueing {chunkingCompletionPercentage}%
-                  </p>
-                  <ProgressBar
-                    completionPercentage={chunkingCompletionPercentage}
-                  />
-                </Col>
-              )}
-              {processingCompletionPercentage < 100 && (
-                <Col className="flex-1 gap-1">
-                  <p className="text-xs text-neutral-500">
-                    Processing {processingCompletionPercentage}%
-                  </p>
-                  <ProgressBar
-                    completionPercentage={processingCompletionPercentage}
-                  />
-                </Col>
+              {(chunkingCompletionPercentage < 100 ||
+                processingCompletionPercentage < 100) && (
+                <>
+                  <Col className="flex-1 gap-1">
+                    <p className="text-xs text-neutral-500">
+                      Queueing {chunkingCompletionPercentage}%
+                    </p>
+                    <ProgressBar
+                      completionPercentage={chunkingCompletionPercentage}
+                    />
+                  </Col>
+
+                  <Col className="flex-1 gap-1">
+                    <p className="text-xs text-neutral-500">
+                      Processing {processingCompletionPercentage}%
+                    </p>
+                    <ProgressBar
+                      completionPercentage={processingCompletionPercentage}
+                    />
+                  </Col>
+                </>
               )}
             </div>
           );
