@@ -1,3 +1,5 @@
+"use client";
+
 import { useSession } from "next-auth/react";
 import type { Channel } from "pusher-js";
 import { useCallback, useEffect, useState } from "react";

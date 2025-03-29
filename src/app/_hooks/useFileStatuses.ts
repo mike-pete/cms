@@ -1,3 +1,4 @@
+"use client";
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -7,13 +8,13 @@ import usePusherSub from "../_hooks/userPusherSub";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
+export type FileStatus = RouterOutputs["contact"]["getFilesStatus"][number];
+
 type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
 
 const useFileStatuses = () => {
   const { subscribe } = usePusherSub();
-  const [files, setFiles] = useState<
-    RouterOutputs["contact"]["getFilesStatus"]
-  >({});
+  const [files, setFiles] = useState<FileStatus[]>([]);
 
   const { data, refetch } = api.contact.getFilesStatus.useQuery();
 

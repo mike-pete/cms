@@ -5,13 +5,11 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
 import { cn } from "~/lib/utils";
-import useFileStatuses from "../_hooks/useFileStatuses";
+import { type FileStatus } from "../_hooks/useFileStatuses";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-export default function ChunkUpdates() {
-  const files = useFileStatuses();
-
+export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
   if (!files || Object.values(files).length === 0) {
     return null;
   }
