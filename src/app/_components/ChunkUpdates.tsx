@@ -2,79 +2,15 @@
 import dayjs from "dayjs";
 import calendar from "dayjs/plugin/calendar";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { useEffect, useState } from "react";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
 import { cn } from "~/lib/utils";
-import { api, type RouterOutputs } from "~/trpc/react";
-import usePusherSub from "../_hooks/userPusherSub";
+import useFileStatuses from "../_hooks/useFileStatuses";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
-
-const useFileProgress = () => {
-  const { subscribe } = usePusherSub();
-  const [files, setFiles] = useState<
-    RouterOutputs["contact"]["getFilesStatus"]
-  >({});
-
-  const { data, refetch } = api.contact.getFilesStatus.useQuery();
-
-  const updateFileProgress = (newFiles: FileUpdate[]) => {
-    setFiles((prev) => {
-      const updatedFiles = { ...prev };
-
-      for (const newFile of newFiles) {
-        const fileId = newFile.fileId;
-        const prevFile = updatedFiles[fileId];
-
-        if (!prevFile) {
-          updatedFiles[fileId] = { ...newFile };
-        } else {
-          const doneChunks = Math.max(prevFile.doneChunks, newFile.doneChunks);
-          const totalChunks = Math.max(
-            prevFile.totalChunks === Infinity ? 0 : prevFile.totalChunks,
-            newFile.totalChunks === Infinity ? 0 : newFile.totalChunks,
-          );
-          updatedFiles[fileId] = {
-            ...prevFile,
-            ...newFile,
-            doneChunks,
-            totalChunks,
-          };
-        }
-      }
-      return updatedFiles;
-    });
-  };
-
-  useEffect(() => {
-    if (data) {
-      updateFileProgress(Object.values(data));
-    }
-  }, [data]);
-
-  useEffect(() => {
-    const fileSub = subscribe('fileChunked', (fileUpdate) => {
-      updateFileProgress([{...fileUpdate, createdAt: new Date(fileUpdate.createdAt)}]);
-    });
-
-    const chunkSub = subscribe("chunkProcessed", (fileUpdate) => {
-      updateFileProgress([{ ...fileUpdate, createdAt: new Date(fileUpdate.createdAt) }]);
-    });
-
-    return () => {
-      fileSub?.unbind();
-      chunkSub?.unbind();
-    };
-  }, [subscribe, refetch]);
-
-  return files;
-};
-
 export default function ChunkUpdates() {
-  const files = useFileProgress();
+  const files = useFileStatuses();
 
   if (!files || Object.values(files).length === 0) {
     return null;
