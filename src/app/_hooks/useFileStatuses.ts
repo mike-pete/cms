@@ -33,12 +33,8 @@ export type FileStatus = {
 
 const useFileStatuses = () => {
   const [files, setFiles] = useState<Record<number, FileStatus>>({});
-  const { data, refetch, isRefetching } = api.contact.getFilesStatus.useQuery();
+  const { data, refetch } = api.contact.getFilesStatus.useQuery();
   const { subscribe } = usePusherSub();
-
-  console.log("isRefetching", isRefetching);
-
-  console.log("files", files);
 
   const updateFiles = (
     files: ({
@@ -51,8 +47,6 @@ const useFileStatuses = () => {
       const updatedFiles = { ...prev };
       for (const file of files) {
         const fileId = file.fileId;
-
-        console.log("from data", data?.[fileId]);
 
         if (!data?.[fileId]) {
           void refetch();
