@@ -34,7 +34,7 @@ export type FileStatus = {
 const useFileStatuses = () => {
   const [files, setFiles] = useState<Record<number, FileStatus>>({});
   const { data, refetch } = api.contact.getFilesStatus.useQuery();
-  const { subscribe } = usePusherSub();
+  const { subscribe, isReady } = usePusherSub();
 
   const updateFiles = (
     files: ({
@@ -97,8 +97,9 @@ const useFileStatuses = () => {
     });
   };
 
-  const updateFile = (file: Parameters<typeof updateFiles>[0][number]) =>
+  const updateFile = (file: Parameters<typeof updateFiles>[0][number]) => {
     updateFiles([file]);
+  };
 
   useEffect(() => {
     if (data) {
@@ -129,57 +130,59 @@ const useFileStatuses = () => {
   // TODO: sync with upload
 
   useEffect(() => {
-    const chunking = subscribe(
-      "chunkQueued",
-      ({
-        fileId,
-        fileName,
-        createdAt,
-        chunkingCompleted,
-        chunkingPercentage,
-      }) => {
-        const update = {
+    if (isReady) {
+      const chunking = subscribe(
+        "chunkQueued",
+        ({
           fileId,
           fileName,
-          createdAt: new Date(createdAt),
-          chunking: {
-            percentage: chunkingCompleted ? 100 : chunkingPercentage,
-          },
-        };
-        updateFile(update);
-      },
-    );
+          createdAt,
+          chunkingCompleted,
+          chunkingPercentage,
+        }) => {
+          const update = {
+            fileId,
+            fileName,
+            createdAt: new Date(createdAt),
+            chunking: {
+              percentage: chunkingCompleted ? 100 : chunkingPercentage,
+            },
+          };
+          updateFile(update);
+        },
+      );
 
-    const chunkProcessing = subscribe(
-      "chunkProcessed",
-      ({
-        createdAt,
-        fileName,
-        fileId,
-        doneChunks,
-        totalChunks,
-        chunkingCompleted,
-      }) => {
-        const update = {
-          fileId,
+      const chunkProcessing = subscribe(
+        "chunkProcessed",
+        ({
+          createdAt,
           fileName,
-          createdAt: new Date(createdAt),
-          processing: {
-            percentage: chunkingCompleted
-              ? (doneChunks / totalChunks) * 100
-              : 0,
-            errorCount: 0,
-          },
-        };
-        updateFile(update);
-      },
-    );
+          fileId,
+          doneChunks,
+          totalChunks,
+          chunkingCompleted,
+        }) => {
+          const update = {
+            fileId,
+            fileName,
+            createdAt: new Date(createdAt),
+            processing: {
+              percentage: chunkingCompleted
+                ? (doneChunks / totalChunks) * 100
+                : 0,
+              errorCount: 0,
+            },
+          };
+          updateFile(update);
+        },
+      );
 
-    return () => {
-      chunking?.unbind();
-      chunkProcessing?.unbind();
-    };
-  }, [subscribe]);
+      return () => {
+        chunking?.unbind();
+        chunkProcessing?.unbind();
+      };
+    }
+  }, [subscribe, isReady]);
 
   return Object.values(files);
 };

@@ -8,16 +8,30 @@ import { type z } from "zod";
 import { pusherClient, pusherEvents } from "~/lib/pusher";
 
 const usePusherSub = () => {
-  const { data: session } = useSession();
-  invariant(session?.user, "must be authenticated to subscribe");
-  const [channel] = useState<Channel>(pusherClient.subscribe(session.user.id));
+  const { data: session, status } = useSession();
+  const [channel, setChannel] = useState<Channel | null>(null);
 
   useEffect(() => {
+    // Only set up subscription when session is loaded and user exists
+    if (status === "authenticated" && session?.user?.id) {
+      const newChannel = pusherClient.subscribe(session.user.id);
+      setChannel(newChannel);
+
+      return () => {
+        newChannel.unbind_all();
+        newChannel.unsubscribe();
+      };
+    }
+
+    // Cleanup if session is lost
     return () => {
-      channel.unbind_all();
-      channel.unsubscribe();
+      if (channel) {
+        channel.unbind_all();
+        channel.unsubscribe();
+        setChannel(null);
+      }
     };
-  }, [channel, session.user, session.user.id]);
+  }, [status, session?.user?.id, channel]);
 
   const subscribe = useCallback(
     <EventKey extends keyof typeof pusherEvents>(
@@ -36,7 +50,7 @@ const usePusherSub = () => {
     [channel],
   );
 
-  return { subscribe };
+  return { subscribe, isReady: !!channel };
 };
 
 export default usePusherSub;
