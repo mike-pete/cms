@@ -14,6 +14,7 @@ export const pusherEvents = {
     fileId: z.number(),
     createdAt: z.string(),
     fileName: z.string(),
+    chunkNumber: z.number(),
   }),
   chunkQueued: z.object({
     fileName: z.string(),

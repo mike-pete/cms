@@ -159,6 +159,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
           doneChunks: fileStatus.doneChunks,
           fileId: fileId,
           chunkingCompleted: fileStatus.chunkingCompleted,
+          chunkNumber,
         });
       }
     } catch (error) {

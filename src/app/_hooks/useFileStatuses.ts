@@ -92,8 +92,11 @@ const useFileStatuses = () => {
     });
   };
 
-  const updateFile = (file: Parameters<typeof updateFiles>[0][number]) => {
-    if (file.processing?.percentage === 100) {
+  const updateFile = (
+    file: Parameters<typeof updateFiles>[0][number],
+    reset?: boolean,
+  ) => {
+    if (reset) {
       void utils.contact.getContacts.reset();
     }
     updateFiles([file]);
@@ -159,6 +162,7 @@ const useFileStatuses = () => {
           doneChunks,
           totalChunks,
           chunkingCompleted,
+          chunkNumber,
         }) => {
           const update = {
             fileId,
@@ -171,7 +175,8 @@ const useFileStatuses = () => {
               errorCount: 0,
             },
           };
-          updateFile(update);
+          const reset = chunkNumber === 0 || chunkingCompleted  && doneChunks === totalChunks;
+          updateFile(update, reset);
         },
       );
 
