@@ -8,12 +8,6 @@ import usePusherSub from "./userPusherSub";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-// export type FileStatus = RouterOutputs["contact"]["getFilesStatus"][number] & {
-//   chunkingCompletionPercentage: number;
-// };
-
-// type FileUpdate = RouterOutputs["contact"]["getFilesStatus"][number];
-
 export type FileStatus = {
   fileId: number;
   fileName: string;
@@ -35,6 +29,7 @@ const useFileStatuses = () => {
   const [files, setFiles] = useState<Record<number, FileStatus>>({});
   const { data, refetch } = api.contact.getFilesStatus.useQuery();
   const { subscribe, isReady } = usePusherSub();
+  const utils = api.useUtils();
 
   const updateFiles = (
     files: ({
@@ -98,6 +93,9 @@ const useFileStatuses = () => {
   };
 
   const updateFile = (file: Parameters<typeof updateFiles>[0][number]) => {
+    if (file.processing?.percentage === 100) {
+      void utils.contact.getContacts.reset();
+    }
     updateFiles([file]);
   };
 
