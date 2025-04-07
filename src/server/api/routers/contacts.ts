@@ -48,9 +48,9 @@ async function queueChunk({
       columnMapping,
     },
     flowControl: {
-      ratePerSecond: 5,
+      ratePerSecond: 100,
       parallelism: 10,
-      key: "${fileId}",
+      key: `${fileId}`,
     },
   });
 }
