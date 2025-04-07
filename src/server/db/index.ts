@@ -5,7 +5,7 @@ import * as schema from "./schema";
 
 const pool = new Pool({
   ...dbConfig.dbCredentials,
-  max: 5,
+  max: 20,
   idleTimeoutMillis: 10_000,
   connectionTimeoutMillis: 20_000,
 });
