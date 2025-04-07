@@ -4,6 +4,8 @@ A contact management system built to upload and process CSV files with over 1 mi
 
 Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.app/)
 
+https://github.com/mike-pete/dex/blob/main/docs/csv.mp4
+
 ## Goals
 
 - [x] System should be scalable (ideally serverless)
@@ -12,8 +14,9 @@ Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.
 
 ## Tools
 
-- [Drizzle](https://orm.drizzle.team/docs/overview) - ORM
 - [Next.js](https://nextjs.org/docs) - Frontend & backend
+- [Drizzle](https://orm.drizzle.team/docs/overview) - ORM
+- [tRPC](https://trpc.io/docs) - RPC wrapper around Tanstack Query
 - [Vercel](https://vercel.com/docs) - NextJS Hosting & [Fluid Compute](https://vercel.com/fluid)
 - [Upstash Qstash](https://upstash.com/docs/qstash) - Queue service
 - [Pusher](https://pusher.com/docs) - Realtime updates with websockets
