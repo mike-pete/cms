@@ -18,6 +18,9 @@ https://github.com/user-attachments/assets/48028a32-a88d-4a65-b6d6-aaa3849ecde0
 - [Drizzle](https://orm.drizzle.team/docs/overview) - ORM
 - [tRPC](https://trpc.io/docs) - RPC wrapper around Tanstack Query
 - [Vercel](https://vercel.com/docs) - NextJS Hosting & [Fluid Compute](https://vercel.com/fluid)
+- [Resend](https://resend.com/docs) - Email service
+- [React Email](https://react.email/docs) - Email templates
+- [new.email](https://new.email/) - React email generator
 - [Upstash Qstash](https://upstash.com/docs/qstash) - Queue service
 - [Pusher](https://pusher.com/docs) - Realtime updates with websockets
 - [Cloudflare R2](https://developers.cloudflare.com/r2/) - Object storage
