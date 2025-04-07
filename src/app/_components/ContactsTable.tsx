@@ -51,7 +51,7 @@ export function ContactsTable() {
                 <TableHead>email</TableHead>
                 <TableHead>first name</TableHead>
                 <TableHead>last name</TableHead>
-                <TableHead>created at</TableHead>
+                <TableHead>created on</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
