@@ -1,10 +1,17 @@
 # Local Development
 
+We use concurrently to run the dev server and the queue server with one command.
+
 ```bash
-
-npx @upstash/qstash-cli dev
-
+npm run dev
 ```
+
+If you need to run the queue server separately, you can use the following command:
+
+```bash
+npx @upstash/qstash-cli dev
+```
+
 
 docker pull postgres
 
