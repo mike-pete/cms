@@ -12,9 +12,9 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { cn } from "~/lib/utils";
-import { api } from "~/trpc/react";
 import Col from "../../components/Col";
 import type useFileStatuses from "../_hooks/useFileStatuses";
+import { useFileUpload } from "../_hooks/useFileUpload";
 
 type ColumnMapping = {
   firstName?: string;
@@ -70,7 +70,6 @@ export function CsvUpload({
   updateFile: ReturnType<typeof useFileStatuses>["updateFile"];
 }) {
   const [file, setFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Partial<ColumnMapping>>(
@@ -78,8 +77,7 @@ export function CsvUpload({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { mutateAsync: getUploadUrl } = api.contact.getUploadURL.useMutation();
-  const { mutateAsync: processFile } = api.contact.processFile.useMutation();
+  const { uploadFile, isUploading } = useFileUpload({ updateFile });
 
   const parseHeaders = async (file: File) => {
     const text = await file.text();
@@ -135,57 +133,7 @@ export function CsvUpload({
     if (!file || !isColumnMappingComplete) return;
 
     try {
-      setIsUploading(true);
-
-      // Get the presigned URL
-      const { presignedURL, fileId } = await getUploadUrl({
-        fileName: file.name,
-      });
-
-      const createdAt = new Date();
-
-      updateFile({
-        fileId,
-        fileName: file.name,
-        createdAt,
-      });
-
-      // Upload the file using fetch with progress tracking
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", presignedURL);
-      xhr.setRequestHeader("Content-Type", "text/csv");
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = (event.loaded / event.total) * 100;
-          updateFile({
-            fileId,
-            fileName: file.name,
-            createdAt,
-            upload: {
-              percentage: progress,
-            },
-          });
-        }
-      };
-
-      await new Promise((resolve, reject) => {
-        xhr.onload = () => {
-          if (xhr.status === 200) {
-            resolve(xhr.response);
-          } else {
-            reject(new Error(`Upload failed with status ${xhr.status}`));
-          }
-        };
-        xhr.onerror = () => reject(new Error("Upload failed"));
-        xhr.send(file);
-      });
-
-      // We need to cast the columnMapping as complete since we've already validated it
-      await processFile({
-        fileId,
-        columnMapping: columnMapping as ColumnMapping,
-      });
+      await uploadFile(file, columnMapping as ColumnMapping);
 
       setFile(null);
       setHeaders([]);
@@ -194,10 +142,8 @@ export function CsvUpload({
         fileInputRef.current.value = "";
       }
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error(error);
       alert("Failed to upload file");
-    } finally {
-      setIsUploading(false);
     }
   };
 
