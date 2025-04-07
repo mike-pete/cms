@@ -77,7 +77,7 @@ export function CsvUpload({
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { uploadFile, isUploading } = useFileUpload({ updateFile });
+  const uploadFile = useFileUpload({ updateFile });
 
   const parseHeaders = async (file: File) => {
     const text = await file.text();
@@ -133,7 +133,7 @@ export function CsvUpload({
     if (!file || !isColumnMappingComplete) return;
 
     try {
-      await uploadFile(file, columnMapping as ColumnMapping);
+      void uploadFile(file, columnMapping as ColumnMapping);
 
       setFile(null);
       setHeaders([]);
@@ -189,7 +189,6 @@ export function CsvUpload({
                 type="file"
                 accept=".csv"
                 onChange={handleFileChange}
-                disabled={isUploading}
                 className="hidden"
               />
               <p className="text-center text-sm text-gray-500">
@@ -220,10 +219,10 @@ export function CsvUpload({
           {file && (
             <Button
               onClick={handleUpload}
-              disabled={!file || isUploading || !isColumnMappingComplete}
+              disabled={!file || !isColumnMappingComplete}
               className="w-full"
             >
-              {isUploading ? "Uploading..." : "Upload CSV"}
+              Upload CSV
             </Button>
           )}
         </Col>

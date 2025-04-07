@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { ColumnMapping } from "~/app/api/v1/queue/handle-chunks/InputSchems";
 import { api } from "~/trpc/react";
 import type useFileStatuses from "./useFileStatuses";
@@ -8,7 +7,6 @@ export function useFileUpload({
 }: {
   updateFile: ReturnType<typeof useFileStatuses>["updateFile"];
 }) {
-  const [isUploading, setIsUploading] = useState(false);
   const { mutateAsync: getUploadUrl } = api.contact.getUploadURL.useMutation();
   const { mutateAsync: processFile } = api.contact.processFile.useMutation();
 
@@ -16,8 +14,6 @@ export function useFileUpload({
     if (!file) return;
 
     try {
-      setIsUploading(true);
-
       // Get the presigned URL
       const { presignedURL, fileId } = await getUploadUrl({
         fileName: file.name,
@@ -72,13 +68,8 @@ export function useFileUpload({
     } catch (error) {
       console.error("Upload error:", error);
       throw error;
-    } finally {
-      setIsUploading(false);
     }
   };
 
-  return {
-    uploadFile,
-    isUploading,
-  };
+  return uploadFile;
 }
