@@ -4,7 +4,7 @@ A contact management system built to upload and process CSV files with over 1 mi
 
 Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.app/)
 
-https://github.com/mike-pete/dex/blob/main/docs/csv.mp4
+https://github.com/mike-pete/dex/blob/main/docs/CSV.mp4
 
 ## Goals
 
