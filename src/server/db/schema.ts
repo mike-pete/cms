@@ -166,5 +166,9 @@ export const contacts = createTable(
   (contact) => ({
     createdByIdIdx: index("contacts_created_by_idx").on(contact.createdById),
     createdAtIdx: index("contacts_created_at_idx").on(contact.createdAt),
+    createdByCreatedAtIdx: index("contacts_created_by_created_at_idx").on(
+      contact.createdById,
+      contact.createdAt,
+    ),
   }),
 );
