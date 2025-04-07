@@ -204,10 +204,11 @@ export function CsvUpload() {
       <label>
         <Col
           className={cn(
-            "group cursor-pointer items-center justify-center gap-4 rounded-lg border-2 border-dashed bg-neutral-900 p-4 transition-colors",
+            "group items-center justify-center gap-4 rounded-lg border-2 border-dashed bg-neutral-900 p-4 transition-colors",
             file || isDragging
               ? "border-emerald-500"
               : "border-neutral-700 hover:border-neutral-600",
+            !file && "cursor-pointer",
           )}
         >
           {!file ? (
@@ -265,7 +266,7 @@ export function CsvUpload() {
 
           {file && (
             <Button
-            onClick={handleUpload}
+              onClick={handleUpload}
               disabled={!file || isUploading || !isColumnMappingComplete}
               className="w-full"
             >
