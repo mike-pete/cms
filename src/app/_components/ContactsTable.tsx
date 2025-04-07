@@ -1,5 +1,6 @@
 "use client";
 
+import { type inferRouterOutputs } from "@trpc/server";
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "~/components/ui/button";
@@ -11,9 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "~/components/ui/table";
+import { type AppRouter } from "~/server/api/root";
 import { api } from "~/trpc/react";
 import Col from "../../components/Col";
 import Row from "../../components/Row";
+import SkeletonBox from "./SkeletonBox";
+
+type RouterOutput = inferRouterOutputs<AppRouter>;
+type ContactsResponse = NonNullable<RouterOutput["contact"]["getContacts"]>;
 
 export function ContactsTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -21,13 +27,17 @@ export function ContactsTable() {
     page: currentPage,
     limit: 50,
   });
-  const [data, setData] = useState(freshData);
+  const [data, setData] = useState<ContactsResponse | undefined>(freshData);
 
   useEffect(() => {
     if (freshData) {
       setData(freshData);
     }
   }, [freshData]);
+
+  if (data === undefined) {
+    return <SkeletonBox />;
+  }
 
   if (!data?.contacts.length) {
     return (
@@ -83,7 +93,7 @@ export function ContactsTable() {
 
       <div className="mt-4 flex shrink-0 items-center justify-between px-2">
         <div className="text-sm text-neutral-400">
-          Page {data.currentPage} of {data.totalPages}
+          Page {currentPage} of {data.totalPages}
         </div>
         <Row className="gap-2">
           <Button
