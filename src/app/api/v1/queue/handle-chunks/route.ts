@@ -33,7 +33,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     const { csv, chunkNumber, fileId, createdById, columnMapping } =
       InputSchema.parse(await req.json());
 
-    // Parse the CSV string
     const { data, errors: parseErrors } = Papa.parse(csv, {
       header: true,
       skipEmptyLines: "greedy", // Skip empty rows more aggressively
@@ -41,7 +40,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       delimitersToGuess: [",", ";", "\t"], // Try to guess the delimiter
     });
 
-    // Cast the parsed data as an array of records
     const rawData = data as Record<string, string>[];
 
     if (parseErrors.length > 0) {
@@ -49,7 +47,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       // TODO: save errors to db
     }
 
-    // Validate each row
     const validationResults: ValidationResult[] = [];
 
     for (let index = 0; index < rawData.length; index++) {

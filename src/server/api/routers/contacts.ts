@@ -163,11 +163,9 @@ export const contactRouter = createTRPCRouter({
       const queueCurrentChunk = () => {
         if (!currentChunk || currentChunk.length <= 1) return; // Skip empty chunks
 
-        // Calculate bytes processed for this chunk
         const chunkContent = currentChunk.join("\n");
         bytesProcessed += Buffer.byteLength(chunkContent, "utf8");
 
-        // Calculate percentage based on bytes processed vs total file size
         const chunkingPercentage =
           totalSize > 0
             ? Math.min(Math.round((bytesProcessed / totalSize) * 100), 99) // Cap at 99% until fully complete
@@ -202,7 +200,6 @@ export const contactRouter = createTRPCRouter({
           continue;
         }
 
-        // Add line to current chunk
         invariant(headers, "Headers should be defined");
         currentChunk.push(line);
 
