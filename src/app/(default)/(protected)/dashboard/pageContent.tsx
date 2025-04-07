@@ -1,8 +1,8 @@
 "use client";
 
-import ChunkUpdates from "~/app/_components/ChunkUpdates";
 import { ContactsTable } from "~/app/_components/ContactsTable";
 import { CsvUpload } from "~/app/_components/CsvUpload";
+import UploadedFiles from "~/app/_components/UploadedFiles";
 import useFileStatuses from "~/app/_hooks/useFileStatuses";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
@@ -19,7 +19,7 @@ export default function PageContent() {
             <h2 className="text-sm text-neutral-500">uploaded files</h2>
           </Row>
           <Col className="gap-4 p-4">
-            <ChunkUpdates files={files} />
+            <UploadedFiles files={files} />
           </Col>
         </Col>
       </Col>

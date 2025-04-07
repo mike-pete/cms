@@ -9,7 +9,7 @@ import { type FileStatus } from "../_hooks/useFileStatuses";
 dayjs.extend(relativeTime);
 dayjs.extend(calendar);
 
-export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
+export default function UploadedFiles({ files }: { files: FileStatus[] }) {
   if (!files || Object.values(files).length === 0) {
     return null;
   }
