@@ -8,12 +8,12 @@ import Col from "~/components/Col";
 import Row from "~/components/Row";
 
 export default function PageContent() {
-  const files = useFileStatuses();
+  const { files, updateFile } = useFileStatuses();
 
   return (
     <Row className="h-full flex-1 overflow-hidden">
       <Col className="flex h-full max-w-sm flex-1 gap-4 border-r border-neutral-700 p-8">
-        <CsvUpload />
+        <CsvUpload updateFile={updateFile} />
         <Col className="flex min-h-0 flex-1 overflow-y-auto rounded-md border border-neutral-700">
           <Row className="sticky top-0 border-b border-neutral-700 bg-neutral-950 px-4 py-2">
             <h2 className="text-sm text-neutral-500">uploaded files</h2>

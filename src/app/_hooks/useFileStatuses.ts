@@ -175,7 +175,9 @@ const useFileStatuses = () => {
               errorCount: 0,
             },
           };
-          const reset = chunkNumber === 0 || chunkingCompleted  && doneChunks === totalChunks;
+          const reset =
+            chunkNumber === 0 ||
+            (chunkingCompleted && doneChunks === totalChunks);
           updateFile(update, reset);
         },
       );
@@ -187,7 +189,7 @@ const useFileStatuses = () => {
     }
   }, [subscribe, isReady]);
 
-  return Object.values(files);
+  return { files: Object.values(files), updateFile };
 };
 
 export default useFileStatuses;

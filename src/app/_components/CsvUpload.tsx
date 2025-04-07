@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import invariant from "tiny-invariant";
 import { Button } from "~/components/ui/button";
-import { Progress } from "~/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -15,6 +14,7 @@ import {
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import Col from "../../components/Col";
+import type useFileStatuses from "../_hooks/useFileStatuses";
 
 type ColumnMapping = {
   firstName?: string;
@@ -64,9 +64,12 @@ function ColumnSelector({
   );
 }
 
-export function CsvUpload() {
+export function CsvUpload({
+  updateFile,
+}: {
+  updateFile: ReturnType<typeof useFileStatuses>["updateFile"];
+}) {
   const [file, setFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [headers, setHeaders] = useState<string[]>([]);
@@ -139,6 +142,14 @@ export function CsvUpload() {
         fileName: file.name,
       });
 
+      const createdAt = new Date();
+
+      updateFile({
+        fileId,
+        fileName: file.name,
+        createdAt,
+      });
+
       // Upload the file using fetch with progress tracking
       const xhr = new XMLHttpRequest();
       xhr.open("PUT", presignedURL);
@@ -147,7 +158,14 @@ export function CsvUpload() {
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = (event.loaded / event.total) * 100;
-          setUploadProgress(progress);
+          updateFile({
+            fileId,
+            fileName: file.name,
+            createdAt,
+            upload: {
+              percentage: progress,
+            },
+          });
         }
       };
 
@@ -169,7 +187,6 @@ export function CsvUpload() {
         columnMapping: columnMapping as ColumnMapping,
       });
 
-      console.log("Upload completed successfully!");
       setFile(null);
       setHeaders([]);
       setColumnMapping({});
@@ -181,7 +198,6 @@ export function CsvUpload() {
       alert("Failed to upload file");
     } finally {
       setIsUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -253,15 +269,6 @@ export function CsvUpload() {
                 />
               ))}
             </Col>
-          )}
-
-          {isUploading && (
-            <div className="space-y-2">
-              <Progress value={uploadProgress} />
-              <p className="text-center text-sm text-gray-500">
-                {Math.round(uploadProgress)}%
-              </p>
-            </div>
           )}
 
           {file && (

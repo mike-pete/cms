@@ -26,6 +26,9 @@ export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
             new Date(a.createdAt ?? 0).getTime(),
         )
         .map((file) => {
+          const uploadCompletionPercentage = Number(
+            file.upload.percentage.toFixed(0),
+          );
           const chunkingCompletionPercentage = Number(
             file.chunking.percentage.toFixed(0),
           );
@@ -57,17 +60,19 @@ export default function ChunkUpdates({ files }: { files: FileStatus[] }) {
                   })}
                 </p>
               </Row>
-              {/* {completionPercentage < 100 && (
-                <Col className="flex-1 gap-1">
-                  <p className="text-xs text-neutral-500">
-                    Uploading {completionPercentage}%
-                  </p>
-                  <ProgressBar completionPercentage={completionPercentage} />
-                </Col>
-              )} */}
-              {(chunkingCompletionPercentage < 100 ||
+
+              {(uploadCompletionPercentage < 100 ||
+                chunkingCompletionPercentage < 100 ||
                 processingCompletionPercentage < 100) && (
                 <>
+                  <Col className="flex-1 gap-1">
+                    <p className="text-xs text-neutral-500">
+                      Uploading {uploadCompletionPercentage}%
+                    </p>
+                    <ProgressBar
+                      completionPercentage={uploadCompletionPercentage}
+                    />
+                  </Col>
                   <Col className="flex-1 gap-1">
                     <p className="text-xs text-neutral-500">
                       Queueing {chunkingCompletionPercentage}%
