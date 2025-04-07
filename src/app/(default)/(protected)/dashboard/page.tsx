@@ -5,11 +5,13 @@ import Row from "~/components/Row";
 import { api, HydrateClient } from "~/trpc/server";
 import FileUploadSidebar from "./FileUploadSidebar";
 export default async function DashboardPage() {
-  await api.contact.getContacts.prefetch({
-    page: 1,
-    limit: 50,
-  });
-  await api.contact.getFilesStatus.prefetch();
+  await Promise.all([
+    api.contact.getContacts.prefetch({
+      page: 1,
+      limit: 50,
+    }),
+    api.contact.getFilesStatus.prefetch(),
+  ]);
 
   return (
     <HydrateClient>
