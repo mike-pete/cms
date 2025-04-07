@@ -4,9 +4,11 @@ import type { PgInsertValue } from "drizzle-orm/pg-core";
 import Papa from "papaparse";
 import invariant from "tiny-invariant";
 import { z } from "zod";
+import SuccessfulCsvProcessingEmail from "~/emails/SuccessfulCsvProcessingEmail";
 import pub from "~/server/connections/pusher";
+import resend from "~/server/connections/resend";
 import { db } from "~/server/db";
-import { chunks, contacts, files } from "~/server/db/schema";
+import { chunks, contacts, files, users } from "~/server/db/schema";
 import { InputSchema } from "./InputSchems";
 
 type ContactRow = {
@@ -109,7 +111,6 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
                 createdById,
               }) satisfies NewContact,
           );
-          // Don't await here, just prepare the insert promise using the transaction
           writes.push(tx.insert(contacts).values(batch));
         }
 
@@ -152,6 +153,22 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       invariant(fileStatus.fileName, "File name not found");
 
       if (fileStatus.chunkingCompleted) {
+        const user = await db.query.users.findFirst({
+          where: eq(users.id, createdById),
+        });
+
+        const email = user?.email;
+        if (email) {
+          await resend.emails.send({
+            from: "mike@lemonshell.com",
+            to: email,
+            subject: "CSV Processing Complete",
+            react: SuccessfulCsvProcessingEmail({
+              fileName: fileStatus.fileName,
+            }),
+          });
+        }
+
         await pub.chunkProcessed(createdById, {
           createdAt: fileStatus.createdAt.toISOString(),
           fileName: fileStatus.fileName,

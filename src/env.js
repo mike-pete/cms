@@ -32,6 +32,7 @@ export const env = createEnv({
     NEXTAUTH_URL: z.string(),
     PUSHER_SECRET: z.string(),
     PUSHER_APP_ID: z.string(),
+    RESEND_API_KEY: z.string().min(1),
   },
 
   /**
@@ -73,6 +74,7 @@ export const env = createEnv({
     PUSHER_APP_ID: process.env.PUSHER_APP_ID,
     NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
     NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
