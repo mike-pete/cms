@@ -8,9 +8,9 @@ https://github.com/user-attachments/assets/48028a32-a88d-4a65-b6d6-aaa3849ecde0
 
 ## Goals
 
-- [x] System should be scalable (ideally serverless)
-- [x] The user should be able to upload CSV files with 1 million rows
-- [x] The user should be able to see the progress of the file upload in real time
+- [x] System should be scalable (ideally serverless).
+- [x] The user should be able to upload CSV files with 1 million rows.
+- [x] The user should be able to see the progress of the file upload in real time.
 
 ## Tools
 
