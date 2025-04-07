@@ -10,9 +10,7 @@ Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.
 - [x] The user should be able to upload CSV files with many rows (1M+)
 - [x] The user should be able to see the progress of the file upload in real time
 
-## Architecture
-
-### Tools
+## Tools
 
 - [Drizzle](https://orm.drizzle.team/docs/overview) - ORM
 - [Next.js](https://nextjs.org/docs) - Frontend & backend
@@ -22,16 +20,26 @@ Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.
 - [Cloudflare R2](https://developers.cloudflare.com/r2/) - Object storage
 - [AWS Aurora Serverless Postgres](https://aws.amazon.com/rds/aurora/?nc2=h_ql_prod_db_aa) - Database
 
-### Architecture
-First, the user uploads a CSV file to the system using a presigned URL.
+## System Design
 
 ![Architecture](./docs/system-design.png)
 
-Then, the system will process the file in chunks and save the data to the database. Note: Step 1 is outlined in more detail in the previous image.
-
-![Architecture](./docs/system-design-2.png)
+1. The user uploads a CSV file using a [presigned URL](https://developers.cloudflare.com/r2/api/s3/presigned-urls/).
+2. The frontend notifies the backend when the file is uploaded and ready to be processed.
+3. The backend streams in the file from R2.
+4. As the file is streamed in, it is broken down into chunks.
+5. We create a record in the database for each chunk to track it's progress and add the chunk to a queue.
+6. The queue pushes chunks to a serverless function to process parse the chunk and save it's data to the database.
 
 ## Local Development
+
+### Installation
+
+```bash
+npm install
+```
+
+### Running the app
 
 > Note: Make sure you have all the environment variables set up in your `.env` file. Without them, the app won't run.
 
@@ -46,6 +54,8 @@ If you need to run the queue server separately, you can use the following comman
 ```bash
 npx @upstash/qstash-cli dev
 ```
+
+### Local Database
 
 You can use docker to run the database locally:
 
@@ -62,3 +72,13 @@ docker run -d \
  -p 5432:5432 \
  postgres
 ```
+
+After updating the schema, we can push the changes to the database with the following command:
+
+```bash
+npm run db:push
+```
+
+## Updating Production
+
+Since we are using Vercel, we can just push to the main branch and it will automatically deploy to production.
