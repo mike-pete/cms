@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useRef, useState } from "react";
 import invariant from "tiny-invariant";
+import Row from "~/components/Row";
 import { Button } from "~/components/ui/button";
 import {
   Select,
@@ -127,6 +128,15 @@ export function CsvUpload({
     }
   };
 
+  const resetForm = () => {
+    setFile(null);
+    setHeaders([]);
+    setColumnMapping({});
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -134,13 +144,7 @@ export function CsvUpload({
 
     try {
       void uploadFile(file, columnMapping as ColumnMapping);
-
-      setFile(null);
-      setHeaders([]);
-      setColumnMapping({});
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      resetForm();
     } catch (error) {
       console.error(error);
       alert("Failed to upload file");
@@ -217,13 +221,25 @@ export function CsvUpload({
           )}
 
           {file && (
-            <Button
-              onClick={handleUpload}
-              disabled={!file || !isColumnMappingComplete}
-              className="w-full"
-            >
-              Upload CSV
-            </Button>
+            <Row className="w-full gap-2">
+              <Button
+                onClick={handleUpload}
+                disabled={!file || !isColumnMappingComplete}
+                className="w-full"
+              >
+                Upload CSV
+              </Button>
+              <Button
+                onClick={(e) => {
+                  e.preventDefault();
+
+                  resetForm();
+                }}
+                className="border border-neutral-400 bg-transparent hover:border-red-800 hover:bg-red-800"
+              >
+                Cancel
+              </Button>
+            </Row>
           )}
         </Col>
       </label>
