@@ -47,6 +47,11 @@ async function queueChunk({
       createdById,
       columnMapping,
     },
+    flowControl: {
+      ratePerSecond: 5,
+      parallelism: 10,
+      key: "${fileId}",
+    },
   });
 }
 

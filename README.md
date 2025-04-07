@@ -1,9 +1,8 @@
 # Local Development
 
 ```bash
-p
 
-
+npx @upstash/qstash-cli dev
 
 ```
 
