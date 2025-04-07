@@ -1,3 +1,4 @@
+import SkeletonBox from "~/app/_components/SkeletonBox";
 import Col from "~/components/Col";
 import Row from "~/components/Row";
 
@@ -13,11 +14,5 @@ export default function Loading() {
         </Col>
       </Col>
     </Row>
-  );
-}
-
-function SkeletonBox() {
-  return (
-    <div className="h-full w-full animate-pulse rounded-md border border-neutral-700 bg-neutral-900" />
   );
 }
