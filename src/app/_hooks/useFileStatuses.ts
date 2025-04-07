@@ -128,8 +128,6 @@ const useFileStatuses = () => {
     }
   }, [data]);
 
-  // TODO: sync with upload
-
   useEffect(() => {
     if (isReady) {
       const chunking = subscribe(

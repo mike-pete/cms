@@ -58,7 +58,6 @@ export function useFileUpload({
         xhr.send(file);
       });
 
-      // Process the file with column mapping
       await processFile({
         fileId,
         columnMapping,
