@@ -150,21 +150,21 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       invariant(fileStatus.fileName, "File name not found");
 
       if (fileStatus.chunkingCompleted) {
-        const user = await db.query.users.findFirst({
-          where: eq(users.id, createdById),
-        });
+        // const user = await db.query.users.findFirst({
+        //   where: eq(users.id, createdById),
+        // });
 
-        const email = user?.email;
-        if (email) {
-          await resend.emails.send({
-            from: "mike@lemonshell.com",
-            to: email,
-            subject: "CSV Processing Complete",
-            react: SuccessfulCsvProcessingEmail({
-              fileName: fileStatus.fileName,
-            }),
-          });
-        }
+        // const email = user?.email;
+        // if (email) {
+        //   await resend.emails.send({
+        //     from: "mike@lemonshell.com",
+        //     to: email,
+        //     subject: "CSV Processing Complete",
+        //     react: SuccessfulCsvProcessingEmail({
+        //       fileName: fileStatus.fileName,
+        //     }),
+        //   });
+        // }
 
         await pub.chunkProcessed(createdById, {
           createdAt: fileStatus.createdAt.toISOString(),
