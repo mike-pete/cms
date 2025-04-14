@@ -35,6 +35,7 @@ export const files = createTable(
       .default(sql`CURRENT_TIMESTAMP`)
       .notNull(),
     chunkingCompleted: boolean("chunking_completed").notNull().default(false),
+    emailSent: boolean("email_sent").notNull().default(false),
   },
   (file) => ({
     createdByIdIdx: index("files_created_by_idx").on(file.createdById),

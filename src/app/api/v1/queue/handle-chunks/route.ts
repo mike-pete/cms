@@ -150,28 +150,46 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       invariant(fileStatus.fileName, "File name not found");
 
       if (fileStatus.chunkingCompleted) {
-        // const user = await db.query.users.findFirst({
-        //   where: eq(users.id, createdById),
-        // });
+        if (fileStatus.doneChunks === fileStatus.totalChunks) {
+          await db.transaction(async (tx) => {
 
-        // const email = user?.email;
-        // if (email) {
-        //   await resend.emails.send({
-        //     from: "mike@lemonshell.com",
-        //     to: email,
-        //     subject: "CSV Processing Complete",
-        //     react: SuccessfulCsvProcessingEmail({
-        //       fileName: fileStatus.fileName,
-        //     }),
-        //   });
-        // }
+            const [updatedFile] = await tx
+              .update(files)
+              .set({ emailSent: true })
+              .where(
+                and(
+                  eq(files.id, fileStatus.fileId),
+                  eq(files.emailSent, false),
+                ),
+              )
+              .returning();
+
+            if (updatedFile) {
+              const user = await tx.query.users.findFirst({
+                where: eq(users.id, createdById),
+              });
+
+              const email = user?.email;
+              if (email) {
+                await resend.emails.send({
+                  from: "mike@lemonshell.com",
+                  to: email,
+                  subject: "CSV Processing Complete",
+                  react: SuccessfulCsvProcessingEmail({
+                    fileName: fileStatus.fileName,
+                  }),
+                });
+              }
+            }
+          });
+        }
 
         await pub.chunkProcessed(createdById, {
           createdAt: fileStatus.createdAt.toISOString(),
           fileName: fileStatus.fileName,
           totalChunks: fileStatus.totalChunks,
           doneChunks: fileStatus.doneChunks,
-          fileId: fileId,
+          fileId: fileStatus.fileId,
           chunkingCompleted: fileStatus.chunkingCompleted,
           chunkNumber,
         });
