@@ -2,8 +2,6 @@
 
 A contact management system built to upload and process CSV files with over 1 million rows.
 
-Try it out at [https://cms-five-pearl.vercel.app](https://cms-five-pearl.vercel.app/)
-
 https://github.com/user-attachments/assets/48028a32-a88d-4a65-b6d6-aaa3849ecde0
 
 ## Goals
